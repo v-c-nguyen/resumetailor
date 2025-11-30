@@ -14,6 +14,9 @@ const PDF_TEMPLATES = [
   { value: 3, label: 'Template3' },
   { value: 4, label: 'Template4' },
   { value: 5, label: 'Template5' },
+  { value: 6, label: 'Template6' },
+  { value: 7, label: 'Template7' },
+  { value: 8, label: 'Template8' },
 ];
 
 export default function ProfileEditor({ profiles, onUpdate }: ProfileEditorProps) {

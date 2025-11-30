@@ -9,6 +9,8 @@ import { renderTemplate2 } from './templates/template2';
 import { renderTemplate3 } from './templates/template3';
 import { renderTemplate4 } from './templates/template4';
 import { renderTemplate5 } from './templates/template5';
+import { renderTemplate6 } from './templates/template6';
+import { renderTemplate7 } from './templates/template7';
 
 // Template router - routes to appropriate template renderer
 async function generateResumePdf(resumeText: string, template: number = 1): Promise<Uint8Array> {
@@ -44,6 +46,10 @@ async function generateResumePdf(resumeText: string, template: number = 1): Prom
       return await renderTemplate4(context);
     case 5:
       return await renderTemplate5(context);
+    case 6:
+      return await renderTemplate6(context);
+    case 7:
+      return await renderTemplate7(context);
     default:
       return await renderTemplate1(context);
   }
@@ -79,7 +85,7 @@ export async function POST(req: NextRequest) {
     const baseResume: string = profile?.resumeText || ``;
     const customPrompt = profile?.customPrompt;
     const pdfTemplate = profile?.pdfTemplate || 1;
-    
+
     // 3. Tailor resume with OpenAI
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const prompt = buildPrompt(baseResume, jobDescription, customPrompt);
