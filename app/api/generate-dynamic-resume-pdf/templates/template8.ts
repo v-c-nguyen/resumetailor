@@ -1,4 +1,4 @@
-import { PDFPage, rgb } from 'pdf-lib';
+import { rgb } from 'pdf-lib';
 import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, COLORS } from '../utils';
 
 // Template 7 Body Content Renderer - Refined style with corner accents

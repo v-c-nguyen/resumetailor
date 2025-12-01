@@ -322,7 +322,6 @@ export async function renderTemplate5(context: TemplateContext): Promise<Uint8Ar
   // Name positioned on the right side (asymmetric layout)
   if (name) {
     const nameLines = wrapText(name, fontBold, NAME_SIZE, CONTENT_WIDTH * 0.6);
-    let nameX = right - (CONTENT_WIDTH * 0.6);
     for (const line of nameLines) {
       const textWidth = fontBold.widthOfTextAtSize(line, NAME_SIZE);
       // Right-align the name
