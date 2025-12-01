@@ -1,20 +1,20 @@
 import { BaseResumeProfile } from '../baseResumes';
 
 export const profile: BaseResumeProfile = {
-  name: "Venu Yara",
+  name: "Aaron Roberts",
   resumeText: `
-Senior Software Engineer
-Venu Yara
-venu.yara212@gmail.com
+SENIOR FULL STACK WEB DEVELOPER
+Aaron Roberts
+aaronroberts.0493@gmail.com
 
-(510) 458-8143
-Louisville, KY
+201-992-1583
+DeBary, FL
 
 Summary:
-Senior Full Stack Engineer with 12+ years of experience architecting scalable, cloud-native applications using JavaScript, TypeScript, Node.js, React.js, Java (Spring Boot), and distributed system design patterns. Expert in microservices, event-driven pipelines, REST/GraphQL APIs, and multi-cloud deployments across AWS, Azure, and GCP. Skilled in integrating machine learning workflows, optimizing backend performance, and designing secure, resilient infrastructures. Proven leader in Agile environments, modernizing legacy systems, and delivering high-impact technical solutions that elevate scalability, automation, and engineering velocity.
+Senior Full Stack Developer with 9+ years of experience specializing in AI-driven application architecture, LLM integration, and Python-based automation. Strong background blending machine learning workloads with modern front-end development using React and TypeScript. Adept at designing scalable cloud systems across AWS and Azure, implementing data pipelines, and building secure, reliable services that support research, HR tech, and enterprise operations. Known for creating practical, maintainable solutions that streamline workflows and improve long-term engineering efficiency
 
 Experience:
-Senior Full Stack Engineer at Humana / TCS: 08/2022 – Present
+Senior Full Stack Engineer at PuzzleHR, Tampa, FL: 02/2024 – Present
 • Built and optimized backend services using Node.js (Express, NestJS) and Spring Boot for claims and customer systems serving millions of users.
 • Designed event-driven data pipelines using Kafka, Redis, and MongoDB to ensure low-latency, scalable message processing.
 • Developed modern UI features with React, TypeScript, and Angular integrated with REST and GraphQL APIs.
@@ -24,7 +24,7 @@ Senior Full Stack Engineer at Humana / TCS: 08/2022 – Present
 • Built observability solutions with Prometheus, Grafana, and CloudWatch, reducing incident MTTD by 60%.
 • Led Agile workflows, code reviews, and mentorship initiatives, improving team velocity by 25%.
 
-Senior Software Engineer (AI, Full Stack, Cloud) at FMC: 06/2021 – 06/2022
+Senior Full Stack Developer at Florida R&D Associates, Debary, FL: 02/2016 – 01/2024
 • Built scalable backend services using Node.js, Express, and MongoDB, achieving 99.9% uptime across mission-critical workflows.
 • Developed asynchronous pipelines with Node.js and Python to synchronize data between microservices.
 • Architected AWS Lambda, ECS, and Azure Functions solutions that reduced cloud costs by 30%.
@@ -33,7 +33,7 @@ Senior Software Engineer (AI, Full Stack, Cloud) at FMC: 06/2021 – 06/2022
 • Created Python RPA automations that removed manual workflows and saved 200+ hours each quarter.
 • Implemented secure authentication flows with OAuth2, JWT, and RBAC aligned with OWASP standards.
 
-Senior Software Engineer at UPS: 12/2016 – 06/2021
+Freelance Developer at Upwork: 02/2012 – 01/2016
 • Modernized legacy systems by implementing Node.js, Express, and Spring Boot microservices to improve reliability and reduce server load by 35%.
 • Developed interactive dashboards using React.js and Angular supported by optimized REST APIs.
 • Designed and tuned MongoDB, PostgreSQL, and MySQL schemas for large-scale tracking datasets.
@@ -42,7 +42,7 @@ Senior Software Engineer at UPS: 12/2016 – 06/2021
 • Maintained tests using Jest, JUnit, and Mockito improving deployment stability and reducing production issues by 40%.
 • Mentored junior developers and worked with UX teams to enhance accessibility and responsiveness.
 
-Full Stack Engineer at SVS Tech: 04/2013 – 05/2015
+Software Developer at USIC, Central Illinois: 10/2010 – 01/2012
 • Developed backend services using Node.js, Express, and early Java frameworks, improving performance across client applications.
 • Built responsive interfaces using JavaScript, AngularJS, jQuery, HTML5, and CSS3 for cross-device UIs.
 • Designed optimized MySQL and MongoDB schemas to support growing application needs.
@@ -52,21 +52,17 @@ Full Stack Engineer at SVS Tech: 04/2013 – 05/2015
 • Translated UI mockups into functional layouts using early UI toolkits.
 
 Technical Skills:
-• Languages: JavaScript, TypeScript, Node.js, Java (Spring Boot), Python, SQL, Bash
-• Backend & APIs: Node.js, Express, Spring Boot, microservices, REST, GraphQL, WebSockets, gRPC, Kafka, RabbitMQ
-• Frontend: React.js, Next.js, Redux, Angular, Vue.js, Tailwind, Material UI
-• Cloud & DevOps: AWS (ECS, Lambda, EC2, S3, RDS), Azure Functions, Docker, Kubernetes, Terraform, Jenkins, GitHub Actions, GitLab CI/CD
-• Databases: MongoDB, PostgreSQL, MySQL, Redis, DynamoDB, Elasticsearch
-• Testing: Jest, Cypress, Supertest, Postman/Newman, JUnit, Mockito, JMeter
-• AI/ML: Python (FastAPI, scikit-learn), ML pipelines, predictive analytics, automation
-• Security & Performance: OAuth2, JWT, RBAC, OWASP, rate limiting, caching, query optimization
-• Additional: API gateway design, CQRS, observability, Prometheus/Grafana, Agile/Scrum
+• Languages: Python, JavaScript, TypeScript, SQL, C#, HTML5, CSS3/SASS, Bash 
+• AI & ML: LLM integration (Azure OpenAI, OpenAI API), Transformers, scikit-learn, Pandas, NumPy, vector search, embeddings, model lifecycle management, prompt engineering, data preprocessing pipelines
+• Frontend: React, Next.js, Redux, React Query, Material-UI, Tailwind, Chart.js, jQuery (legacy maintenance), Bootstrap
+• Backend: FastAPI, Flask, Django (light use), Node.js, Express.js, GraphQL, REST API design, Serverless functions
+• Cloud & DevOps: AWS (S3, Redshift, Glue, Lambda), GCP (BigQuery, Cloud Functions), Azure, Docker, GitHub Actions, GitLab CI, Nginx, Kubernetes, Terraform, Jenkins
+• Databases: PostgreSQL, MySQL, Snowflake, MongoDB, SQL Server 
+• Testing & Quality: Jest, Supertest, PyTest, React Testing Library, Postman, ESLint, Prettier
+• Other: Git workflows, Dockerized pipelines, automated tests, environment config management, deployment scripts
 
 Education:
-Master’s Degree in Computer Science | Northwestern Polytechnic University | 2016
-Bachelor’s Degree in Computer Science | JNTU Hyderabad | 2013
-Microsoft Azure Administrator – Associate
-AWS Solutions Architect – Associate
+Bachelor’s Degree in Web Design and Development | Full Sail University | 2016
     `,
   pdfTemplate: 5
 };

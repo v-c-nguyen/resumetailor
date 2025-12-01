@@ -11,6 +11,7 @@ import { renderTemplate4 } from './templates/template4';
 import { renderTemplate5 } from './templates/template5';
 import { renderTemplate6 } from './templates/template6';
 import { renderTemplate7 } from './templates/template7';
+import { renderTemplate8 } from './templates/template8';
 
 // Template router - routes to appropriate template renderer
 async function generateResumePdf(resumeText: string, template: number = 1): Promise<Uint8Array> {
@@ -50,6 +51,8 @@ async function generateResumePdf(resumeText: string, template: number = 1): Prom
       return await renderTemplate6(context);
     case 7:
       return await renderTemplate7(context);
+    case 8:
+      return await renderTemplate8(context);
     default:
       return await renderTemplate1(context);
   }
