@@ -104,11 +104,19 @@ function renderBodyContentTemplate3(
             y -= bodyLineHeight + 2;
           }
           
-          // Company and period combined
+          // Company and period on same line with separator
           const formattedPeriod = formatDate(period.trim());
-          const companyPeriodLine = `${companyName.trim()}  •  ${formattedPeriod}`;
-          const companyPeriodLines = wrapText(companyPeriodLine, font, bodySize, contentWidth - 20);
-          for (const line of companyPeriodLines) {
+          const companyNameText = companyName.trim();
+          
+          // Calculate positions for company name and period
+          const companyWidth = fontBold.widthOfTextAtSize(companyNameText, bodySize);
+          const separatorText = '  |  ';
+          const separatorWidth = font.widthOfTextAtSize(separatorText, bodySize);
+          const periodWidth = font.widthOfTextAtSize(formattedPeriod, bodySize);
+          const totalWidth = companyWidth + separatorWidth + periodWidth;
+          
+          if (totalWidth <= contentWidth - 20) {
+            // Fit on one line
             if (y < marginBottom) {
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
               context.page.drawRectangle({
@@ -120,18 +128,141 @@ function renderBodyContentTemplate3(
               });
               y = PAGE_HEIGHT - 72;
             }
-            drawTextWithBold(context.page, line, left + 20, y, font, fontBold, bodySize, MEDIUM_GRAY);
+            // Draw company name in bold
+            context.page.drawText(companyNameText, {
+              x: left + 20,
+              y,
+              size: bodySize,
+              font: fontBold,
+              color: BLACK
+            });
+            // Draw separator
+            context.page.drawText(separatorText, {
+              x: left + 20 + companyWidth,
+              y,
+              size: bodySize,
+              font,
+              color: MEDIUM_GRAY
+            });
+            // Draw period
+            context.page.drawText(formattedPeriod, {
+              x: left + 20 + companyWidth + separatorWidth,
+              y,
+              size: bodySize,
+              font,
+              color: MEDIUM_GRAY
+            });
             y -= bodyLineHeight;
+          } else {
+            // Wrap to multiple lines if needed
+            const companyLines = wrapText(companyNameText, fontBold, bodySize, contentWidth - 20);
+            for (let i = 0; i < companyLines.length; i++) {
+              if (y < marginBottom) {
+                context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                context.page.drawRectangle({
+                  x: PAGE_WIDTH - 25,
+                  y: 0,
+                  width: 25,
+                  height: PAGE_HEIGHT,
+                  color: CORAL,
+                });
+                y = PAGE_HEIGHT - 72;
+              }
+              if (i === companyLines.length - 1) {
+                // Last line: company name + separator + period
+                const lastLineWidth = fontBold.widthOfTextAtSize(companyLines[i], bodySize);
+                const remainingWidth = contentWidth - 20 - lastLineWidth - separatorWidth;
+                if (periodWidth <= remainingWidth) {
+                  // Period fits on same line
+                  context.page.drawText(companyLines[i], {
+                    x: left + 20,
+                    y,
+                    size: bodySize,
+                    font: fontBold,
+                    color: BLACK
+                  });
+                  context.page.drawText(separatorText, {
+                    x: left + 20 + lastLineWidth,
+                    y,
+                    size: bodySize,
+                    font,
+                    color: MEDIUM_GRAY
+                  });
+                  context.page.drawText(formattedPeriod, {
+                    x: left + 20 + lastLineWidth + separatorWidth,
+                    y,
+                    size: bodySize,
+                    font,
+                    color: MEDIUM_GRAY
+                  });
+                } else {
+                  // Period on next line
+                  context.page.drawText(companyLines[i], {
+                    x: left + 20,
+                    y,
+                    size: bodySize,
+                    font: fontBold,
+                    color: BLACK
+                  });
+                  y -= bodyLineHeight;
+                  if (y < marginBottom) {
+                    context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                    context.page.drawRectangle({
+                      x: PAGE_WIDTH - 25,
+                      y: 0,
+                      width: 25,
+                      height: PAGE_HEIGHT,
+                      color: CORAL,
+                    });
+                    y = PAGE_HEIGHT - 72;
+                  }
+                  context.page.drawText(formattedPeriod, {
+                    x: left + 20,
+                    y,
+                    size: bodySize,
+                    font,
+                    color: MEDIUM_GRAY
+                  });
+                }
+              } else {
+                // Regular company name line
+                context.page.drawText(companyLines[i], {
+                  x: left + 20,
+                  y,
+                  size: bodySize,
+                  font: fontBold,
+                  color: BLACK
+                });
+              }
+              y -= bodyLineHeight;
+            }
           }
           
-          y -= 8;
+          y -= 6;
         }
       } else {
-        const isSkillsCategory = line.startsWith('·');
+        const isSkillsCategory = line.startsWith('·') || line.startsWith('•');
         if (isSkillsCategory) {
-          const categoryName = line.trim();
-          const categoryLines = wrapText(categoryName, fontBold, bodySize + 1, contentWidth - 20);
-          for (const categoryLine of categoryLines) {
+          // Remove the bullet/dot prefix and trim
+          const lineWithoutBullet = line.trim().replace(/^[·•]\s*/, '');
+          
+          // Extract category name (part before colon) and skills (part after colon)
+          const colonIndex = lineWithoutBullet.indexOf(':');
+          if (colonIndex !== -1) {
+            const categoryName = lineWithoutBullet.substring(0, colonIndex + 1).trim(); // Include the colon
+            const skillsText = lineWithoutBullet.substring(colonIndex + 1).trim();
+            
+            // Calculate available width for skills (after category name)
+            const categoryWidth = fontBold.widthOfTextAtSize(categoryName, bodySize);
+            const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
+            const skillsAvailableWidth = contentWidth - 20 - categoryWidth - spaceWidth;
+            
+            // Wrap skills text
+            const wrappedSkills = wrapText(skillsText, font, bodySize, skillsAvailableWidth);
+            
+            // Draw category name in bold (no dot) and skills on same/next lines
+            let currentX = left + 20;
+            
             if (y < marginBottom) {
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
               context.page.drawRectangle({
@@ -143,14 +274,76 @@ function renderBodyContentTemplate3(
               });
               y = PAGE_HEIGHT - 72;
             }
-            context.page.drawText(categoryLine, { 
-              x: left + 20, 
+            
+            // Draw category name in bold
+            context.page.drawText(categoryName, { 
+              x: currentX, 
               y, 
-              size: bodySize + 1, 
+              size: bodySize, 
               font: fontBold, 
               color: BLACK 
             });
+            
+            // Draw skills text on same line or wrapped to next lines
+            if (wrappedSkills.length > 0 && wrappedSkills[0]) {
+              currentX += categoryWidth + spaceWidth;
+              context.page.drawText(wrappedSkills[0], {
+                x: currentX,
+                y,
+                size: bodySize,
+                font,
+                color: BLACK
+              });
+              
+              // Draw remaining wrapped lines
+              for (let i = 1; i < wrappedSkills.length; i++) {
+                y -= bodyLineHeight;
+                if (y < marginBottom) {
+                  context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                  context.page.drawRectangle({
+                    x: PAGE_WIDTH - 25,
+                    y: 0,
+                    width: 25,
+                    height: PAGE_HEIGHT,
+                    color: CORAL,
+                  });
+                  y = PAGE_HEIGHT - 72;
+                }
+                context.page.drawText(wrappedSkills[i], {
+                  x: left + 20,
+                  y,
+                  size: bodySize,
+                  font,
+                  color: BLACK
+                });
+              }
+            }
             y -= bodyLineHeight + 2;
+          } else {
+            // Fallback: if no colon, just remove the dot and display as bold
+            const categoryName = lineWithoutBullet;
+            const categoryLines = wrapText(categoryName, fontBold, bodySize + 1, contentWidth - 20);
+            for (const categoryLine of categoryLines) {
+              if (y < marginBottom) {
+                context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                context.page.drawRectangle({
+                  x: PAGE_WIDTH - 25,
+                  y: 0,
+                  width: 25,
+                  height: PAGE_HEIGHT,
+                  color: CORAL,
+                });
+                y = PAGE_HEIGHT - 72;
+              }
+              context.page.drawText(categoryLine, { 
+                x: left + 20, 
+                y, 
+                size: bodySize + 1, 
+                font: fontBold, 
+                color: BLACK 
+              });
+              y -= bodyLineHeight + 2;
+            }
           }
         } else {
           const wrapped = wrapTextWithIndent(line, font, bodySize, contentWidth - 20);

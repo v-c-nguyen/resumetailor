@@ -111,18 +111,11 @@ function renderBodyContentTemplate2(
           }
           
           // Add visual separator line after job header
-          y -= 8;
+          y -= 5;
           if (y < marginBottom) {
             context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
             y = PAGE_HEIGHT - 72;
           }
-          // Draw a subtle horizontal line to separate job header from description
-          context.page.drawLine({
-            start: { x: left + 12, y: y },
-            end: { x: right - 20, y: y },
-            thickness: 0.5,
-            color: LIGHT_GRAY,
-          });
           y -= 10; // Extra spacing after separator line
         }
       } else {
