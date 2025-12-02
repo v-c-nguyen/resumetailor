@@ -81,13 +81,7 @@ function renderBodyContentTemplate1(
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
               y = PAGE_HEIGHT - 72;
             }
-            context.page.drawText(titleLine, {
-              x: left + 20,
-              y,
-              size: bodySize,
-              font: fontBold,
-              color: BLACK
-            });
+            drawTextWithBold(context.page, titleLine, left + 20, y, font, fontBold, bodySize, BLACK);
             y -= bodyLineHeight + 2;
           }
 
@@ -101,13 +95,7 @@ function renderBodyContentTemplate1(
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
               y = PAGE_HEIGHT - 72;
             }
-            context.page.drawText(line, {
-              x: left + 20,
-              y,
-              size: bodySize,
-              font,
-              color: BLACK
-            });
+            drawTextWithBold(context.page, line, left + 20, y, font, fontBold, bodySize, BLACK);
             y -= bodyLineHeight;
           }
 

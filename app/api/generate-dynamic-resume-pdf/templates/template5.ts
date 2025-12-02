@@ -148,13 +148,7 @@ function renderBodyContentTemplate5(
               });
               y = PAGE_HEIGHT - 72;
             }
-            context.page.drawText(titleLine, { 
-              x: left + 20, 
-              y, 
-              size: bodySize + 2, 
-              font: fontBold, 
-              color: BURGUNDY 
-            });
+            drawTextWithBold(context.page, titleLine, left + 20, y, font, fontBold, bodySize + 2, BURGUNDY);
             y -= bodyLineHeight + 2;
           }
           
@@ -181,24 +175,35 @@ function renderBodyContentTemplate5(
               });
               y = PAGE_HEIGHT - 72;
             }
-            context.page.drawText(line, { 
-              x: left + 20, 
-              y, 
-              size: bodySize, 
-              font, 
-              color: MEDIUM_GRAY 
-            });
+            drawTextWithBold(context.page, line, left + 20, y, font, fontBold, bodySize, MEDIUM_GRAY);
             y -= bodyLineHeight;
           }
           
           y -= 8;
         }
       } else {
-        const isSkillsCategory = line.startsWith('·');
+        const isSkillsCategory = line.startsWith('·') || line.startsWith('•');
         if (isSkillsCategory) {
-          const categoryName = line.trim();
-          const categoryLines = wrapText(categoryName, fontBold, bodySize + 1, contentWidth - 20);
-          for (const categoryLine of categoryLines) {
+          // Remove the bullet/dot prefix and trim
+          const lineWithoutBullet = line.trim().replace(/^[·•]\s*/, '');
+          
+          // Extract category name (part before colon) and skills (part after colon)
+          const colonIndex = lineWithoutBullet.indexOf(':');
+          if (colonIndex !== -1) {
+            const categoryName = lineWithoutBullet.substring(0, colonIndex + 1).trim(); // Include the colon
+            const skillsText = lineWithoutBullet.substring(colonIndex + 1).trim();
+            
+            // Calculate available width for skills (after category name)
+            const categoryWidth = fontBold.widthOfTextAtSize(categoryName, bodySize);
+            const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
+            const skillsAvailableWidth = contentWidth - 20 - categoryWidth - spaceWidth;
+            
+            // Wrap skills text
+            const wrappedSkills = wrapText(skillsText, font, bodySize, skillsAvailableWidth);
+            
+            // Draw category name in bold (no dot) and skills on same/next lines
+            let currentX = left + 20;
+            
             if (y < marginBottom) {
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
               context.page.drawRectangle({
@@ -217,14 +222,90 @@ function renderBodyContentTemplate5(
               });
               y = PAGE_HEIGHT - 72;
             }
-            context.page.drawText(categoryLine, { 
-              x: left + 20, 
+            
+            // Draw category name in bold
+            context.page.drawText(categoryName, { 
+              x: currentX, 
               y, 
-              size: bodySize + 1, 
+              size: bodySize, 
               font: fontBold, 
               color: BLACK 
             });
+            
+            // Draw skills text on same line or wrapped to next lines
+            if (wrappedSkills.length > 0 && wrappedSkills[0]) {
+              currentX += categoryWidth + spaceWidth;
+              context.page.drawText(wrappedSkills[0], {
+                x: currentX,
+                y,
+                size: bodySize,
+                font,
+                color: BLACK
+              });
+              
+              // Draw remaining wrapped lines
+              for (let i = 1; i < wrappedSkills.length; i++) {
+                y -= bodyLineHeight;
+                if (y < marginBottom) {
+                  context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                  context.page.drawRectangle({
+                    x: 0,
+                    y: PAGE_HEIGHT - 15,
+                    width: PAGE_WIDTH,
+                    height: 15,
+                    color: BURGUNDY,
+                  });
+                  context.page.drawRectangle({
+                    x: 0,
+                    y: 0,
+                    width: PAGE_WIDTH,
+                    height: 15,
+                    color: BURGUNDY,
+                  });
+                  y = PAGE_HEIGHT - 72;
+                }
+                context.page.drawText(wrappedSkills[i], {
+                  x: left + 20,
+                  y,
+                  size: bodySize,
+                  font,
+                  color: BLACK
+                });
+              }
+            }
             y -= bodyLineHeight + 2;
+          } else {
+            // Fallback: if no colon, just remove the dot and display as bold
+            const categoryName = lineWithoutBullet;
+            const categoryLines = wrapText(categoryName, fontBold, bodySize + 1, contentWidth - 20);
+            for (const categoryLine of categoryLines) {
+              if (y < marginBottom) {
+                context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                context.page.drawRectangle({
+                  x: 0,
+                  y: PAGE_HEIGHT - 15,
+                  width: PAGE_WIDTH,
+                  height: 15,
+                  color: BURGUNDY,
+                });
+                context.page.drawRectangle({
+                  x: 0,
+                  y: 0,
+                  width: PAGE_WIDTH,
+                  height: 15,
+                  color: BURGUNDY,
+                });
+                y = PAGE_HEIGHT - 72;
+              }
+              context.page.drawText(categoryLine, { 
+                x: left + 20, 
+                y, 
+                size: bodySize + 1, 
+                font: fontBold, 
+                color: BLACK 
+              });
+              y -= bodyLineHeight + 2;
+            }
           }
         } else {
           const wrapped = wrapTextWithIndent(line, font, bodySize, contentWidth - 20);

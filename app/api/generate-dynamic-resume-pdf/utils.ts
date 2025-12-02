@@ -96,16 +96,25 @@ export function wrapTextWithIndent(
   size: number,
   maxWidth: number
 ): { lines: string[]; prefix: string; indentWidth: number } {
-  // Convert '-' to '•' (bullet) for consistency
-  const normalizedText = text.replace(/^(-\s+)/, '• ');
+  // Trim leading whitespace but preserve the structure
+  const trimmedText = text.trimStart();
+  const leadingWhitespace = text.slice(0, text.length - trimmedText.length);
   
-  // Detect common prefixes
-  const prefixMatch = normalizedText.match(/^([\-\·•]\s+)/);
-  const prefix = prefixMatch ? prefixMatch[1] : '';
-  const content = prefix ? normalizedText.slice(prefix.length) : normalizedText;
+  // Detect and normalize bullet formats: -, •, ·, *, or other common bullet chars
+  // Match bullet with optional space, or bullet without space (we'll add space)
+  const bulletMatch = trimmedText.match(/^([\-\·•*▪▫◦‣⁃])(\s*)/);
+  let prefix = '';
+  let content = trimmedText;
   
-  // Calculate prefix width for indentation
-  const prefixWidth = prefix ? font.widthOfTextAtSize(prefix, size) : 0;
+  if (bulletMatch) {
+    // Normalize to '• ' (bullet with space) for consistency
+    prefix = '• ';
+    content = trimmedText.slice(bulletMatch[0].length).trimStart();
+  }
+  
+  // Calculate prefix width for indentation (include leading whitespace if any)
+  const fullPrefix = leadingWhitespace + prefix;
+  const prefixWidth = fullPrefix ? font.widthOfTextAtSize(fullPrefix, size) : 0;
   
   // Wrap the content part
   const wrappedContent = wrapText(content, font, size, maxWidth - prefixWidth);
@@ -114,15 +123,16 @@ export function wrapTextWithIndent(
   const lines: string[] = [];
   wrappedContent.forEach((line, index) => {
     if (index === 0) {
-      lines.push(prefix + line);
+      lines.push(fullPrefix + line);
     } else {
-      lines.push(line);
+      // For wrapped lines, add indentation but no bullet
+      lines.push(leadingWhitespace + line);
     }
   });
   
   return {
     lines,
-    prefix,
+    prefix: fullPrefix,
     indentWidth: prefixWidth
   };
 }

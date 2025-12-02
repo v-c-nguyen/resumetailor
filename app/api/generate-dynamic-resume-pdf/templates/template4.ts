@@ -78,52 +78,86 @@ function renderBodyContentTemplate4(
         y -= sectionLineHeight + 4;
       }
     } else {
-      const isJobExperience = / at .+:.+/.test(line);
+      // Check for job experience line - handle both formats: with/without colon, with/without asterisks
+      // Format 1: "Job Title at Company: Period"
+      // Format 2: "*Job Title at Company, Location**" (period on next line)
+      const isJobExperience = / at .+/.test(line);
       
       if (isJobExperience) {
-        const match = line.match(/^(.+?) at (.+?):\s*(.+)$/);
+        // Strip leading/trailing asterisks from the line
+        let cleanLine = line.replace(/^\*+/, '').replace(/\*+$/, '');
+        
+        // Try to match format with colon (period on same line)
+        let match = cleanLine.match(/^(.+?) at (.+?):\s*(.+)$/);
+        let jobTitle: string;
+        let companyName: string;
+        let period: string;
+        
         if (match) {
-          const [, jobTitle, companyName, period] = match;
-          
-          if (!firstJob) {
-            y -= 16;
-          }
-          firstJob = false;
-          
-          // Job title with emerald accent dot
-          const titleLines = wrapText(jobTitle.trim(), fontBold, bodySize + 2, contentWidth - 30);
-          for (const titleLine of titleLines) {
-            if (y < marginBottom) {
-              context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              context.page.drawRectangle({
-                x: 0,
-                y: 0,
-                width: PAGE_WIDTH,
-                height: 20,
-                color: EMERALD,
-              });
-              y = PAGE_HEIGHT - 72;
+          // Format with colon - period on same line
+          [, jobTitle, companyName, period] = match;
+        } else {
+          // Format without colon - period might be on next line
+          match = cleanLine.match(/^(.+?) at (.+)$/);
+          if (match) {
+            [, jobTitle, companyName] = match;
+            // Check next line for period
+            if (i + 1 < bodyLines.length) {
+              const nextLine = bodyLines[i + 1].trim();
+              // Check if next line looks like a date period
+              if (/^\d{2}\/\d{4}/.test(nextLine) || /^\d{4}/.test(nextLine) || nextLine.includes('–') || nextLine.includes('-')) {
+                period = nextLine;
+                i++; // Skip the next line since we've consumed it
+              } else {
+                period = '';
+              }
+            } else {
+              period = '';
             }
-            // Draw emerald circle before title
-            context.page.drawCircle({
-              x: left + 20,
-              y: y + (bodySize + 2) / 2,
-              size: 4,
+          } else {
+            // Couldn't parse, skip this line
+            continue;
+          }
+        }
+        
+        // Clean up any remaining asterisks from jobTitle and companyName
+        jobTitle = jobTitle.trim().replace(/^\*+/, '').replace(/\*+$/, '');
+        companyName = companyName.trim().replace(/^\*+/, '').replace(/\*+$/, '');
+        
+        if (!firstJob) {
+          y -= 16;
+        }
+        firstJob = false;
+        
+        // Job title with emerald accent dot
+        const titleLines = wrapText(jobTitle, fontBold, bodySize + 2, contentWidth - 30);
+        for (const titleLine of titleLines) {
+          if (y < marginBottom) {
+            context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+            context.page.drawRectangle({
+              x: 0,
+              y: 0,
+              width: PAGE_WIDTH,
+              height: 20,
               color: EMERALD,
             });
-            context.page.drawText(titleLine, { 
-              x: left + 32, 
-              y, 
-              size: bodySize + 2, 
-              font: fontBold, 
-              color: BLACK 
-            });
-            y -= bodyLineHeight + 3;
+            y = PAGE_HEIGHT - 72;
           }
-          
-          // Company and period with emerald separator
+          // Draw emerald circle before title
+          context.page.drawCircle({
+            x: left + 20,
+            y: y + (bodySize + 2) / 2,
+            size: 4,
+            color: EMERALD,
+          });
+          drawTextWithBold(context.page, titleLine, left + 32, y, font, fontBold, bodySize + 2, BLACK);
+          y -= bodyLineHeight + 3;
+        }
+        
+        // Company and period with emerald separator
+        if (period) {
           const formattedPeriod = formatDate(period.trim());
-          const companyPeriodLine = `${companyName.trim()}  •  ${formattedPeriod}`;
+          const companyPeriodLine = `${companyName}  •  ${formattedPeriod}`;
           const companyPeriodLines = wrapText(companyPeriodLine, font, bodySize, contentWidth - 30);
           for (const line of companyPeriodLines) {
             if (y < marginBottom) {
@@ -137,18 +171,30 @@ function renderBodyContentTemplate4(
               });
               y = PAGE_HEIGHT - 72;
             }
-            context.page.drawText(line, { 
-              x: left + 32, 
-              y, 
-              size: bodySize, 
-              font, 
-              color: MEDIUM_GRAY 
-            });
+            drawTextWithBold(context.page, line, left + 32, y, font, fontBold, bodySize, MEDIUM_GRAY);
             y -= bodyLineHeight;
           }
-          
-          y -= 8;
+        } else {
+          // Just company name if no period
+          const companyLines = wrapText(companyName, font, bodySize, contentWidth - 30);
+          for (const line of companyLines) {
+            if (y < marginBottom) {
+              context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+              context.page.drawRectangle({
+                x: 0,
+                y: 0,
+                width: PAGE_WIDTH,
+                height: 20,
+                color: EMERALD,
+              });
+              y = PAGE_HEIGHT - 72;
+            }
+            drawTextWithBold(context.page, line, left + 32, y, font, fontBold, bodySize, MEDIUM_GRAY);
+            y -= bodyLineHeight;
+          }
         }
+        
+        y -= 8;
       } else {
         const isSkillsCategory = line.startsWith('·');
         if (isSkillsCategory) {

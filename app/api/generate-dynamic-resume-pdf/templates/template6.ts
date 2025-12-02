@@ -97,13 +97,7 @@ function renderBodyContentTemplate6(
               });
               y = PAGE_HEIGHT - 72;
             }
-            context.page.drawText(titleLine, { 
-              x: left + 30, 
-              y, 
-              size: bodySize + 2, 
-              font: fontBold, 
-              color: INDIGO 
-            });
+            drawTextWithBold(context.page, titleLine, left + 30, y, font, fontBold, bodySize + 2, INDIGO);
             y -= bodyLineHeight + 2;
           }
           
@@ -123,13 +117,7 @@ function renderBodyContentTemplate6(
               });
               y = PAGE_HEIGHT - 72;
             }
-            context.page.drawText(line, { 
-              x: left + 30, 
-              y, 
-              size: bodySize, 
-              font, 
-              color: MEDIUM_GRAY 
-            });
+            drawTextWithBold(context.page, line, left + 30, y, font, fontBold, bodySize, MEDIUM_GRAY);
             y -= bodyLineHeight;
           }
           
