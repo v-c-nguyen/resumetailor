@@ -102,7 +102,8 @@ export function wrapTextWithIndent(
   
   // Detect and normalize bullet formats: -, •, ·, *, or other common bullet chars
   // Match bullet with optional space, or bullet without space (we'll add space)
-  const bulletMatch = trimmedText.match(/^([\-\·•*▪▫◦‣⁃])(\s*)/);
+  // Using a more comprehensive regex to catch all bullet variations
+  const bulletMatch = trimmedText.match(/^([\-\u2022\u00b7\u2023\u25E6\u2043\u2219\*▪▫◦‣⁃])(\s*)/);
   let content = trimmedText;
   let hasBullet = false;
   
@@ -114,7 +115,8 @@ export function wrapTextWithIndent(
   
   // Calculate prefix width for indentation (include leading whitespace if any)
   // For bullets, we'll use a fixed width for the bullet + space
-  const bulletWidth = size * 0.4; // Approximate width for drawn bullet
+  const bulletRadius = size * 0.2; // Match the radius used in drawBulletPoint
+  const bulletWidth = bulletRadius * 2; // Full width of the bullet circle
   const spaceWidth = font.widthOfTextAtSize(' ', size);
   const prefixWidth = leadingWhitespace ? font.widthOfTextAtSize(leadingWhitespace, size) : 0;
   const fullIndentWidth = prefixWidth + (hasBullet ? bulletWidth + spaceWidth : 0);
@@ -141,7 +143,7 @@ export function wrapTextWithIndent(
   };
 }
 
-// Helper to draw a bullet point (circle) programmatically
+// Helper to draw a bullet point (filled circle) programmatically
 export function drawBulletPoint(
   page: PDFPage,
   x: number,
@@ -149,10 +151,15 @@ export function drawBulletPoint(
   size: number,
   color: RGB
 ) {
-  const bulletRadius = size * 0.15; // Proportional to font size
+  // Calculate bullet size - make it more visible
+  const bulletRadius = size * 0.2; // Slightly larger for better visibility
+  // Calculate y position to align with text baseline (text y is at baseline)
+  const bulletY = y + (size * 0.35); // Adjust to center bullet with text
+  
+  // Draw filled circle for bullet point
   page.drawCircle({
     x: x + bulletRadius,
-    y: y + (size * 0.4), // Adjust vertical position to align with text baseline
+    y: bulletY,
     size: bulletRadius,
     color: color,
   });

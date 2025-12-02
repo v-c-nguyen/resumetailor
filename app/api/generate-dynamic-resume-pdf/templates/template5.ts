@@ -332,8 +332,11 @@ function renderBodyContentTemplate5(
             
             // Draw bullet point programmatically if this line has one
             if (wrapped.hasBullet && i === 0) {
+              const bulletRadius = bodySize * 0.2;
+              const bulletWidth = bulletRadius * 2;
+              const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
               drawBulletPoint(context.page, xPos, y, bodySize, BLACK);
-              const bulletOffset = bodySize * 0.4 + font.widthOfTextAtSize(' ', bodySize);
+              const bulletOffset = bulletWidth + spaceWidth;
               drawTextWithBold(context.page, wrapped.lines[i], xPos + bulletOffset, y, font, fontBold, bodySize, BLACK);
             } else {
               drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
