@@ -103,7 +103,6 @@ export function wrapTextWithIndent(
   // Detect and normalize bullet formats: -, •, ·, *, or other common bullet chars
   // Match bullet with optional space, or bullet without space (we'll add space)
   const bulletMatch = trimmedText.match(/^([\-\·•*▪▫◦‣⁃])(\s*)/);
-  let prefix = '';
   let content = trimmedText;
   let hasBullet = false;
   
