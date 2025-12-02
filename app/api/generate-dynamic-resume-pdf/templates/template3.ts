@@ -1,5 +1,5 @@
 import { PDFPage, rgb } from 'pdf-lib';
-import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, drawBulletPoint, COLORS } from '../utils';
+import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, COLORS } from '../utils';
 
 // Template 3 Body Content Renderer - Modern style with right-side accent and header panels
 function renderBodyContentTemplate3(
@@ -360,18 +360,7 @@ function renderBodyContentTemplate3(
               y = PAGE_HEIGHT - 72;
             }
             const xPos = i === 0 ? left + 20 : left + 20 + wrapped.indentWidth;
-            
-            // Draw bullet point programmatically if this line has one
-            if (wrapped.hasBullet && i === 0) {
-              const bulletRadius = bodySize * 0.2;
-              const bulletWidth = bulletRadius * 2;
-              const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
-              drawBulletPoint(context.page, xPos, y, bodySize, BLACK);
-              const bulletOffset = bulletWidth + spaceWidth;
-              drawTextWithBold(context.page, wrapped.lines[i], xPos + bulletOffset, y, font, fontBold, bodySize, BLACK);
-            } else {
-              drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
-            }
+            drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
             y -= bodyLineHeight;
           }
         }
@@ -458,7 +447,7 @@ export async function renderTemplate3(context: TemplateContext): Promise<Uint8Ar
   // Contact info in header panel (below name, smaller, gray)
   const contactParts = [location, phone, email].filter(Boolean);
   if (contactParts.length > 0) {
-    const contactLine = contactParts.join('  |  ');
+    const contactLine = contactParts.join('  •  ');
     const contactLines = wrapText(contactLine, font, CONTACT_SIZE, CONTENT_WIDTH);
     let contactY = PAGE_HEIGHT - 65;
     for (const line of contactLines) {

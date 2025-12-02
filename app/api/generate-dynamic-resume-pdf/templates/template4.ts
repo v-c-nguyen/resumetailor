@@ -1,5 +1,5 @@
 import { PDFPage, rgb } from 'pdf-lib';
-import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, drawBulletPoint, COLORS } from '../utils';
+import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, COLORS } from '../utils';
 
 // Template 4 Body Content Renderer - Creative style with decorative elements
 function renderBodyContentTemplate4(
@@ -157,7 +157,7 @@ function renderBodyContentTemplate4(
         // Company and period with emerald separator
         if (period) {
           const formattedPeriod = formatDate(period.trim());
-          const companyPeriodLine = `${companyName}  |  ${formattedPeriod}`;
+          const companyPeriodLine = `${companyName}  •  ${formattedPeriod}`;
           const companyPeriodLines = wrapText(companyPeriodLine, font, bodySize, contentWidth - 30);
           for (const line of companyPeriodLines) {
             if (y < marginBottom) {
@@ -236,18 +236,7 @@ function renderBodyContentTemplate4(
               y = PAGE_HEIGHT - 72;
             }
             const xPos = i === 0 ? left + 32 : left + 32 + wrapped.indentWidth;
-            
-            // Draw bullet point programmatically if this line has one
-            if (wrapped.hasBullet && i === 0) {
-              const bulletRadius = bodySize * 0.2;
-              const bulletWidth = bulletRadius * 2;
-              const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
-              drawBulletPoint(context.page, xPos, y, bodySize, BLACK);
-              const bulletOffset = bulletWidth + spaceWidth;
-              drawTextWithBold(context.page, wrapped.lines[i], xPos + bulletOffset, y, font, fontBold, bodySize, BLACK);
-            } else {
-              drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
-            }
+            drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
             y -= bodyLineHeight;
           }
         }
@@ -323,7 +312,7 @@ export async function renderTemplate4(context: TemplateContext): Promise<Uint8Ar
   // Contact info (centered, with decorative emerald dots)
   const contactParts = [location, phone, email].filter(Boolean);
   if (contactParts.length > 0) {
-    const contactLine = contactParts.join('  |  ');
+    const contactLine = contactParts.join('  •  ');
     const contactLines = wrapText(contactLine, font, CONTACT_SIZE, CONTENT_WIDTH);
     for (const line of contactLines) {
       const textWidth = font.widthOfTextAtSize(line, CONTACT_SIZE);

@@ -1,5 +1,5 @@
-import { rgb } from 'pdf-lib';
-import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, drawBulletPoint, COLORS } from '../utils';
+import { PDFPage, rgb } from 'pdf-lib';
+import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, COLORS } from '../utils';
 
 // Template 7 Body Content Renderer - Refined style with corner accents
 function renderBodyContentTemplate8(
@@ -113,13 +113,19 @@ function renderBodyContentTemplate8(
               });
               y = PAGE_HEIGHT - 72;
             }
-            drawTextWithBold(context.page, titleLine, left + 20, y, font, fontBold, bodySize + 1, FOREST_GREEN);
+            context.page.drawText(titleLine, { 
+              x: left + 20, 
+              y, 
+              size: bodySize + 1, 
+              font: fontBold, 
+              color: FOREST_GREEN 
+            });
             y -= bodyLineHeight + 2;
           }
           
           // Company and period
           const formattedPeriod = formatDate(period.trim());
-          const companyPeriodLine = `${companyName.trim()}  |  ${formattedPeriod}`;
+          const companyPeriodLine = `${companyName.trim()}  •  ${formattedPeriod}`;
           const companyPeriodLines = wrapText(companyPeriodLine, font, bodySize, contentWidth - 20);
           for (const line of companyPeriodLines) {
             if (y < marginBottom) {
@@ -141,7 +147,13 @@ function renderBodyContentTemplate8(
               });
               y = PAGE_HEIGHT - 72;
             }
-            drawTextWithBold(context.page, line, left + 20, y, font, fontBold, bodySize, MEDIUM_GRAY);
+            context.page.drawText(line, { 
+              x: left + 20, 
+              y, 
+              size: bodySize, 
+              font, 
+              color: MEDIUM_GRAY 
+            });
             y -= bodyLineHeight;
           }
           
@@ -204,18 +216,7 @@ function renderBodyContentTemplate8(
               y = PAGE_HEIGHT - 72;
             }
             const xPos = i === 0 ? left + 20 : left + 20 + wrapped.indentWidth;
-            
-            // Draw bullet point programmatically if this line has one
-            if (wrapped.hasBullet && i === 0) {
-              const bulletRadius = bodySize * 0.2;
-              const bulletWidth = bulletRadius * 2;
-              const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
-              drawBulletPoint(context.page, xPos, y, bodySize, BLACK);
-              const bulletOffset = bulletWidth + spaceWidth;
-              drawTextWithBold(context.page, wrapped.lines[i], xPos + bulletOffset, y, font, fontBold, bodySize, BLACK);
-            } else {
-              drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
-            }
+            drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
             y -= bodyLineHeight;
           }
         }
@@ -306,7 +307,7 @@ export async function renderTemplate8(context: TemplateContext): Promise<Uint8Ar
   // Contact info (centered, elegant spacing)
   const contactParts = [location, phone, email].filter(Boolean);
   if (contactParts.length > 0) {
-    const contactLine = contactParts.join('  |  ');
+    const contactLine = contactParts.join('  •  ');
     const contactLines = wrapText(contactLine, font, CONTACT_SIZE, CONTENT_WIDTH);
     for (const line of contactLines) {
       const textWidth = font.widthOfTextAtSize(line, CONTACT_SIZE);

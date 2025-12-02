@@ -8,7 +8,6 @@ export type BaseResumeProfile = {
 };
 
 // Import all profiles from individual files (used only for seeding)
-import { profile as christianCarrasco } from './profiles/saul-vendrell';
 import { profile as edwinRivera } from './profiles/adnan-sakib';
 import { profile as markWlodawski } from './profiles/aaron-jones';
 import { profile as samuelWlodawski } from './profiles/alex-triana';
@@ -22,7 +21,6 @@ import { profile as christopherSmith } from './profiles/christopher-smith';
 // Aggregate all profiles from individual files (used only for seeding)
 // This is kept temporarily for the seed script migration
 export const baseResumes: BaseResumeProfile[] = [
-  christianCarrasco,
   edwinRivera,
   markWlodawski,
   samuelWlodawski,

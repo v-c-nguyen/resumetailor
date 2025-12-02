@@ -95,74 +95,36 @@ export function wrapTextWithIndent(
   font: PDFFont,
   size: number,
   maxWidth: number
-): { lines: string[]; prefix: string; indentWidth: number; hasBullet: boolean } {
-  // Trim leading whitespace but preserve the structure
-  const trimmedText = text.trimStart();
-  const leadingWhitespace = text.slice(0, text.length - trimmedText.length);
+): { lines: string[]; prefix: string; indentWidth: number } {
+  // Convert '-' to '•' (bullet) for consistency
+  const normalizedText = text.replace(/^(-\s+)/, '• ');
   
-  // Detect and normalize bullet formats: -, •, ·, *, or other common bullet chars
-  // Match bullet with optional space, or bullet without space (we'll add space)
-  // Using a more comprehensive regex to catch all bullet variations
-  const bulletMatch = trimmedText.match(/^([\-\u2022\u00b7\u2023\u25E6\u2043\u2219\*▪▫◦‣⁃])(\s*)/);
-  let content = trimmedText;
-  let hasBullet = false;
+  // Detect common prefixes
+  const prefixMatch = normalizedText.match(/^([\-\·•]\s+)/);
+  const prefix = prefixMatch ? prefixMatch[1] : '';
+  const content = prefix ? normalizedText.slice(prefix.length) : normalizedText;
   
-  if (bulletMatch) {
-    // Remove bullet from text - we'll draw it programmatically
-    hasBullet = true;
-    content = trimmedText.slice(bulletMatch[0].length).trimStart();
-  }
-  
-  // Calculate prefix width for indentation (include leading whitespace if any)
-  // For bullets, we'll use a fixed width for the bullet + space
-  const bulletRadius = size * 0.2; // Match the radius used in drawBulletPoint
-  const bulletWidth = bulletRadius * 2; // Full width of the bullet circle
-  const spaceWidth = font.widthOfTextAtSize(' ', size);
-  const prefixWidth = leadingWhitespace ? font.widthOfTextAtSize(leadingWhitespace, size) : 0;
-  const fullIndentWidth = prefixWidth + (hasBullet ? bulletWidth + spaceWidth : 0);
+  // Calculate prefix width for indentation
+  const prefixWidth = prefix ? font.widthOfTextAtSize(prefix, size) : 0;
   
   // Wrap the content part
-  const wrappedContent = wrapText(content, font, size, maxWidth - fullIndentWidth);
+  const wrappedContent = wrapText(content, font, size, maxWidth - prefixWidth);
   
-  // Build lines without bullet character in text
+  // Build lines with prefix on first line only
   const lines: string[] = [];
   wrappedContent.forEach((line, index) => {
     if (index === 0) {
-      lines.push(leadingWhitespace + line);
+      lines.push(prefix + line);
     } else {
-      // For wrapped lines, add indentation but no bullet
-      lines.push(leadingWhitespace + line);
+      lines.push(line);
     }
   });
   
   return {
     lines,
-    prefix: leadingWhitespace,
-    indentWidth: fullIndentWidth,
-    hasBullet
+    prefix,
+    indentWidth: prefixWidth
   };
-}
-
-// Helper to draw a bullet point (filled circle) programmatically
-export function drawBulletPoint(
-  page: PDFPage,
-  x: number,
-  y: number,
-  size: number,
-  color: RGB
-) {
-  // Calculate bullet size - make it more visible
-  const bulletRadius = size * 0.2; // Slightly larger for better visibility
-  // Calculate y position to align with text baseline (text y is at baseline)
-  const bulletY = y + (size * 0.35); // Adjust to center bullet with text
-  
-  // Draw filled circle for bullet point
-  page.drawCircle({
-    x: x + bulletRadius,
-    y: bulletY,
-    size: bulletRadius,
-    color: color,
-  });
 }
 
 // Helper to draw text with bold segments (markdown **bold**)
