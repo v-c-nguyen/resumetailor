@@ -51,7 +51,11 @@ STYLE & HUMANIZATION:
 - Ensure realistic, contextually plausible content
 
 OUTPUT:
-Plain text resume matching original format. Include unchanged headline. Label sections clearly with original spacing/order. No decorative lines or commentary.
+- Output ONLY plain text content. Do NOT generate PDF files, binary data, or any file formats.
+- Do NOT include PDF formatting, file headers, or any file structure.
+- Output ONLY the resume text content as plain, readable text.
+- Match original format exactly. Include unchanged headline. Label sections clearly with original spacing/order.
+- No decorative lines, symbols, or commentary. Plain text only.
 
 Base resume: \${baseResume}
 Job description: \${jobDescription}

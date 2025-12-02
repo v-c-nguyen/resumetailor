@@ -71,7 +71,14 @@ Before outputting, perform a final pass to:
 - Re-evaluate flow to ensure the document reads naturally aloud.
 - Guarantee every section has both high ATS keyword density and human readability balance.
 
-Output the improved resume as plain text, exactly following the original resume's format—including the unchanged headline at the top. Clearly label sections (Summary, Professional Experience, Skills, Education, etc) with original spacing, section order, and no decorative lines or symbols.
+CRITICAL OUTPUT REQUIREMENTS:
+- Output ONLY plain text content. Do NOT generate PDF files, binary data, or any file formats.
+- Do NOT include PDF formatting, file headers, or any file structure.
+- Output ONLY the resume text content as plain, readable text.
+- Follow the original resume's format exactly—including the unchanged headline at the top.
+- Clearly label sections (Summary, Professional Experience, Skills, Education, etc) with original spacing and section order.
+- Use plain text only: no decorative lines, symbols, or special formatting characters.
+- The output should be readable text that can be copied and pasted directly.
   `;
 }
 
