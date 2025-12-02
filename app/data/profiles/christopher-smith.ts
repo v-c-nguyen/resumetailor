@@ -13,6 +13,15 @@ Palacios, TX
 Summary:
 Senior Full Stack Developer with 9 years of experience building scalable applications, internal automation tools, and data-driven platforms across retail, healthcare, logistics, and operations domains. Strong front-end expertise in React,  TypeScript, and modern JavaScript, combined with versatile back-end experience using Node.js, Python, Express, PHP, and REST/GraphQL services. Adept at workflow automation, data integration, cloud solutions, and improving system performance through thoughtful architecture. Comfortable working across UI/UX, API design, database modeling, and DevOps tooling to deliver maintainable, cross-functional solutions.
 
+Technical Skills:
+• Programming Languages: JavaScript (ES6+), TypeScript, Python, Go, Ruby
+•	Backend/Integration: Node.js (Express, NestJS), Django, FastAPI, Ruby on Rails, microservices, distributed systems, message queues
+•	Frontend: React (v18+), Next.js, Angular (v17+), AngularJS, PWAs, SSR, Material-UI, Tailwind CSS
+•	Dashbases / Storage: PostgreSQL, MongoDB, Redis, MySQL, SQL Server, DynamoDB, ETL/ELT pipelines
+•	Cloud & DevOps: AWS (Lambda, API Gateway, CloudFront, S3), Azure, GCP, Kubernetes, Docker, Terraform, GitHub Actions, Jenkins, TravisC
+•	Testing & Quality: Jest, Mocha, Cypress, Playwright, Pytest, Rspec
+•	Collaboration & Leadership: Agile/Scrum, Jira, Confluence, Code Reviews, Mentorship, Sprint Planning
+
 Experience:
 Senior Software Engineer at Cargo Express Freight, Irvine, CA: 03/2023 – 09/2025
 • Built Python microservices and AI/ML pipelines for predictive analytics and recommendations deployed across AWS Lambda, EC2, and Azure Functions, increasing operational efficiency by 45%.
@@ -57,15 +66,6 @@ Developer Intern at iFlytek, Hefei, China: 06/2013 – 06/2014
 • Designed MySQL schemas, optimized queries, and created stored procedures improving performance by 45%.
 • Integrated third-party APIs for billing, analytics, and authentication automating workflows and reducing manual intervention.
 • Created comprehensive unit and integration test suites using PyTest and unittest ensuring consistent quality and reducing defects by 40%.
-
-Technical Skills:
-• Programming Languages: JavaScript (ES6+), TypeScript, Python, Go, Ruby
-•	Backend/Integration: Node.js (Express, NestJS), Django, FastAPI, Ruby on Rails, microservices, distributed systems, message queues
-•	Frontend: React (v18+), Next.js, Angular (v17+), AngularJS, PWAs, SSR, Material-UI, Tailwind CSS
-•	Dashbases / Storage: PostgreSQL, MongoDB, Redis, MySQL, SQL Server, DynamoDB, ETL/ELT pipelines
-•	Cloud & DevOps: AWS (Lambda, API Gateway, CloudFront, S3), Azure, GCP, Kubernetes, Docker, Terraform, GitHub Actions, Jenkins, TravisC
-•	Testing & Quality: Jest, Mocha, Cypress, Playwright, Pytest, Rspec
-•	Collaboration & Leadership: Agile/Scrum, Jira, Confluence, Code Reviews, Mentorship, Sprint Planning
 
 Education:
 Bachelor's degree in Computer Science | Hunan University of Science & Technology, Xiangtan, China | 2014

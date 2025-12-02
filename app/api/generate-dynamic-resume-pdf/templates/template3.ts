@@ -318,7 +318,7 @@ function renderBodyContentTemplate3(
                 });
               }
             }
-            y -= bodyLineHeight + 2;
+            y -= bodyLineHeight + 6;
           } else {
             // Fallback: if no colon, just remove the dot and display as bold
             const categoryName = lineWithoutBullet;

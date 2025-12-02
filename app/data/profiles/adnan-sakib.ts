@@ -24,7 +24,7 @@ Technical Skills:
 • Databases: PostgreSQL, MySQL, MongoDB
 • Practices: Agile, TDD, System Design, Observability, Continuous Deployment
 
-ProfessionalExperience:
+Professional Experience:
 Senior Software Engineer at Kiggla: 02/2022 – 09/2025
 • Built and deployed production-grade AI and backend systems using Python, FastAPI, and Node.js.
 • Designed end-to-end features from specification to deployment, ensuring high reliability and test coverage.

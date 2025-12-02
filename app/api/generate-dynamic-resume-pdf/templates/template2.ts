@@ -119,24 +119,89 @@ function renderBodyContentTemplate2(
           y -= 10; // Extra spacing after separator line
         }
       } else {
-        const isSkillsCategory = line.startsWith('·');
+        // Distinguish skill categories from experience bullets
+        // Skill categories have pattern: "• Category Name: skills list"
+        // Experience bullets are full sentences without this pattern
+        const lineWithoutBullet = line.trim().replace(/^[·•]\s*/, '');
+        const colonIndex = lineWithoutBullet.indexOf(':');
+        // Consider it a skill category if it starts with bullet AND has a colon early in the line (within first 30 chars)
+        // This distinguishes "• Programming Languages: JavaScript..." from "• Built Python microservices..."
+        const isSkillsCategory = (line.startsWith('·') || line.startsWith('•')) && 
+                                 colonIndex !== -1 && 
+                                 colonIndex < 30 && 
+                                 !lineWithoutBullet.substring(0, colonIndex).includes(' at ');
+        
         if (isSkillsCategory) {
-          const categoryName = line.trim();
-          const categoryLines = wrapText(categoryName, fontBold, bodySize + 1, contentWidth - 20);
-          for (const categoryLine of categoryLines) {
-            if (y < marginBottom) {
-              context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              y = PAGE_HEIGHT - 72;
-            }
-            context.page.drawText(categoryLine, { 
-              x: left + 12, 
-              y, 
-              size: bodySize + 1, 
-              font: fontBold, 
-              color: BLACK 
-            });
-            y -= bodyLineHeight + 2;
+          // Extract category name (part before colon) and skills (part after colon)
+          const bulletSymbol = '•';
+          const bulletWidth = font.widthOfTextAtSize(bulletSymbol + ' ', bodySize);
+          
+          const categoryName = lineWithoutBullet.substring(0, colonIndex + 1).trim(); // Include the colon
+          const skillsText = lineWithoutBullet.substring(colonIndex + 1).trim();
+          
+          // Calculate available width for skills (after category name and bullet)
+          const categoryWidth = fontBold.widthOfTextAtSize(categoryName, bodySize);
+          const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
+          const skillsAvailableWidth = contentWidth - 20 - bulletWidth - categoryWidth - spaceWidth;
+          
+          // Wrap skills text
+          const wrappedSkills = wrapText(skillsText, font, bodySize, skillsAvailableWidth);
+          
+          // Draw bullet dot, category name in bold, and skills on same/next lines
+          let currentX = left + 12;
+          
+          if (y < marginBottom) {
+            context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+            y = PAGE_HEIGHT - 72;
           }
+          
+          // Draw bullet dot (regular font, not bold)
+          context.page.drawText(bulletSymbol, { 
+            x: currentX, 
+            y, 
+            size: bodySize, 
+            font, 
+            color: BLACK 
+          });
+          
+          // Draw category name in bold (after bullet)
+          currentX += bulletWidth;
+          context.page.drawText(categoryName, { 
+            x: currentX, 
+            y, 
+            size: bodySize, 
+            font: fontBold, 
+            color: BLACK 
+          });
+          
+          // Draw skills text on same line or wrapped to next lines
+          if (wrappedSkills.length > 0 && wrappedSkills[0]) {
+            currentX += categoryWidth + spaceWidth;
+            context.page.drawText(wrappedSkills[0], {
+              x: currentX,
+              y,
+              size: bodySize,
+              font,
+              color: BLACK
+            });
+            
+            // Draw remaining wrapped lines (indented to align with skills, after bullet)
+            for (let i = 1; i < wrappedSkills.length; i++) {
+              y -= bodyLineHeight;
+              if (y < marginBottom) {
+                context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                y = PAGE_HEIGHT - 72;
+              }
+              context.page.drawText(wrappedSkills[i], {
+                x: left + 12 + bulletWidth,
+                y,
+                size: bodySize,
+                font,
+                color: BLACK
+              });
+            }
+          }
+          y -= bodyLineHeight + 6;
         } else {
           const wrapped = wrapTextWithIndent(line, font, bodySize, contentWidth - 20);
           for (let i = 0; i < wrapped.lines.length; i++) {

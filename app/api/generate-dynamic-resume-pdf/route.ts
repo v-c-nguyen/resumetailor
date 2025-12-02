@@ -92,15 +92,24 @@ export async function POST(req: NextRequest) {
     // 3. Tailor resume with OpenAI
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const prompt = buildPrompt(baseResume, jobDescription, customPrompt);
-
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_VERSION || 'gpt-3.5-turbo',
+    const model = process.env.OPENAI_VERSION || 'gpt-3.5-turbo';
+    
+    // Log model being used for debugging (remove in production if needed)
+    console.log(`[Resume Generation] Using model: ${model}`);
+    console.log(`[Resume Generation] Using custom prompt: ${customPrompt ? 'Yes' : 'No'}`);
+    
+    // Build request parameters
+    const requestParams: any = {
+      model,
       messages: [
         { role: 'system', content: 'You are a helpful assistant for creating professional resume content.' },
         { role: 'user', content: prompt }
       ],
       max_completion_tokens: 7000,
-    });
+    };
+
+
+    const completion = await openai.chat.completions.create(requestParams);
 
     const tailoredResume = completion.choices[0].message.content || '';
 

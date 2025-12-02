@@ -182,10 +182,22 @@ function renderBodyContentTemplate5(
           y -= 8;
         }
       } else {
-        const isSkillsCategory = line.startsWith('·') || line.startsWith('•');
+        // Distinguish skill categories from experience bullets
+        // Skill categories have pattern: "• Category Name: skills list"
+        // Experience bullets are full sentences without this pattern
+        const lineWithoutBullet = line.trim().replace(/^[·•]\s*/, '');
+        const colonIndex = lineWithoutBullet.indexOf(':');
+        // Consider it a skill category if it starts with bullet AND has a colon early in the line (within first 30 chars)
+        // This distinguishes "• Programming Languages: JavaScript..." from "• Built Python microservices..."
+        const isSkillsCategory = (line.startsWith('·') || line.startsWith('•')) && 
+                                 colonIndex !== -1 && 
+                                 colonIndex < 30 && 
+                                 !lineWithoutBullet.substring(0, colonIndex).includes(' at ');
+        
         if (isSkillsCategory) {
-          // Remove the bullet/dot prefix and trim
-          const lineWithoutBullet = line.trim().replace(/^[·•]\s*/, '');
+          // Keep the bullet/dot prefix
+          const bulletSymbol = '•';
+          const bulletWidth = font.widthOfTextAtSize(bulletSymbol + ' ', bodySize);
           
           // Extract category name (part before colon) and skills (part after colon)
           const colonIndex = lineWithoutBullet.indexOf(':');
@@ -193,15 +205,15 @@ function renderBodyContentTemplate5(
             const categoryName = lineWithoutBullet.substring(0, colonIndex + 1).trim(); // Include the colon
             const skillsText = lineWithoutBullet.substring(colonIndex + 1).trim();
             
-            // Calculate available width for skills (after category name)
+            // Calculate available width for skills (after category name and bullet)
             const categoryWidth = fontBold.widthOfTextAtSize(categoryName, bodySize);
             const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
-            const skillsAvailableWidth = contentWidth - 20 - categoryWidth - spaceWidth;
+            const skillsAvailableWidth = contentWidth - 20 - bulletWidth - categoryWidth - spaceWidth;
             
             // Wrap skills text
             const wrappedSkills = wrapText(skillsText, font, bodySize, skillsAvailableWidth);
             
-            // Draw category name in bold (no dot) and skills on same/next lines
+            // Draw bullet dot, category name in bold, and skills on same/next lines
             let currentX = left + 20;
             
             if (y < marginBottom) {
@@ -223,7 +235,17 @@ function renderBodyContentTemplate5(
               y = PAGE_HEIGHT - 72;
             }
             
-            // Draw category name in bold
+            // Draw bullet dot (regular font, not bold)
+            context.page.drawText(bulletSymbol, { 
+              x: currentX, 
+              y, 
+              size: bodySize, 
+              font, 
+              color: BLACK 
+            });
+            
+            // Draw category name in bold (after bullet)
+            currentX += bulletWidth;
             context.page.drawText(categoryName, { 
               x: currentX, 
               y, 
@@ -243,7 +265,7 @@ function renderBodyContentTemplate5(
                 color: BLACK
               });
               
-              // Draw remaining wrapped lines
+              // Draw remaining wrapped lines (indented to align with skills, after bullet)
               for (let i = 1; i < wrappedSkills.length; i++) {
                 y -= bodyLineHeight;
                 if (y < marginBottom) {
@@ -265,7 +287,7 @@ function renderBodyContentTemplate5(
                   y = PAGE_HEIGHT - 72;
                 }
                 context.page.drawText(wrappedSkills[i], {
-                  x: left + 20,
+                  x: left + 20 + bulletWidth,
                   y,
                   size: bodySize,
                   font,
@@ -275,10 +297,15 @@ function renderBodyContentTemplate5(
             }
             y -= bodyLineHeight + 2;
           } else {
-            // Fallback: if no colon, just remove the dot and display as bold
+            // Fallback: if no colon, keep the dot and display category name
             const categoryName = lineWithoutBullet;
-            const categoryLines = wrapText(categoryName, fontBold, bodySize + 1, contentWidth - 20);
-            for (const categoryLine of categoryLines) {
+            const categoryLines = wrapText(categoryName, font, bodySize + 1, contentWidth - 30);
+            
+            // Draw bullet dot first
+            const bulletSymbol = '';
+            const bulletWidth = font.widthOfTextAtSize(bulletSymbol, bodySize);
+            
+            for (let lineIdx = 0; lineIdx < categoryLines.length; lineIdx++) {
               if (y < marginBottom) {
                 context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
                 context.page.drawRectangle({
@@ -297,18 +324,52 @@ function renderBodyContentTemplate5(
                 });
                 y = PAGE_HEIGHT - 72;
               }
-              context.page.drawText(categoryLine, { 
-                x: left + 20, 
-                y, 
-                size: bodySize + 1, 
-                font: fontBold, 
-                color: BLACK 
-              });
+              
+              // Draw bullet only on first line
+              if (lineIdx === 0) {
+                context.page.drawText(bulletSymbol, { 
+                  x: left + 20, 
+                  y, 
+                  size: bodySize, 
+                  font, 
+                  color: BLACK 
+                });
+                // Draw category name after bullet
+                context.page.drawText(categoryLines[lineIdx], { 
+                  x: left + 20 + bulletWidth + 4, 
+                  y, 
+                  size: bodySize + 1, 
+                  font: fontBold, 
+                  color: BLACK 
+                });
+              } else {
+                // Subsequent lines without bullet, just indented
+                context.page.drawText(categoryLines[lineIdx], { 
+                  x: left + 20 + bulletWidth + 4, 
+                  y, 
+                  size: bodySize + 1, 
+                  font: fontBold, 
+                  color: BLACK 
+                });
+              }
               y -= bodyLineHeight + 2;
             }
           }
         } else {
-          const wrapped = wrapTextWithIndent(line, font, bodySize, contentWidth - 20);
+          // Experience section bullets - ensure visible dot and proper formatting
+          // Check if line already has a bullet
+          const hasBullet = /^[\-\·•]\s/.test(line);
+          const bulletSymbol = '•';
+          const bulletWidth = font.widthOfTextAtSize(bulletSymbol + ' ', bodySize);
+          
+          let textToWrap = line;
+          if (!hasBullet) {
+            // Add bullet if not present
+            textToWrap = bulletSymbol + ' ' + line;
+          }
+          
+          const wrapped = wrapTextWithIndent(textToWrap, font, bodySize, contentWidth - 20);
+          
           for (let i = 0; i < wrapped.lines.length; i++) {
             if (y < marginBottom) {
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
@@ -328,8 +389,35 @@ function renderBodyContentTemplate5(
               });
               y = PAGE_HEIGHT - 72;
             }
-            const xPos = i === 0 ? left + 20 : left + 20 + wrapped.indentWidth;
-            drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
+            
+            const lineText = wrapped.lines[i];
+            let xPos = i === 0 ? left + 20 : left + 20 + wrapped.indentWidth;
+            
+            // Check if line starts with bullet and draw it separately (not bold)
+            if (i === 0 && (lineText.startsWith('•') || lineText.startsWith('·') || lineText.startsWith('-'))) {
+              const bulletMatch = lineText.match(/^([\-\·•])\s*(.*)/);
+              if (bulletMatch) {
+                const [, bulletChar, content] = bulletMatch;
+                // Draw bullet in regular font (not bold)
+                context.page.drawText(bulletChar, {
+                  x: xPos,
+                  y,
+                  size: bodySize,
+                  font,
+                  color: BLACK
+                });
+                // Draw content - support **bold** markers but default to regular font
+                const contentX = xPos + font.widthOfTextAtSize(bulletChar + ' ', bodySize);
+                drawTextWithBold(context.page, content, contentX, y, font, fontBold, bodySize, BLACK);
+              } else {
+                // No bullet match, draw entire line with bold support
+                drawTextWithBold(context.page, lineText, xPos, y, font, fontBold, bodySize, BLACK);
+              }
+            } else {
+              // Regular line (wrapped continuation), no bullet, regular font with bold support
+              drawTextWithBold(context.page, lineText, xPos, y, font, fontBold, bodySize, BLACK);
+            }
+            
             y -= bodyLineHeight;
           }
         }
