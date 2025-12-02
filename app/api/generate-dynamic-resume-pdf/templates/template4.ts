@@ -85,7 +85,7 @@ function renderBodyContentTemplate4(
       
       if (isJobExperience) {
         // Strip leading/trailing asterisks from the line
-        let cleanLine = line.replace(/^\*+/, '').replace(/\*+$/, '');
+        const cleanLine = line.replace(/^\*+/, '').replace(/\*+$/, '');
         
         // Try to match format with colon (period on same line)
         let match = cleanLine.match(/^(.+?) at (.+?):\s*(.+)$/);
