@@ -1,5 +1,5 @@
 import { PDFPage, rgb } from 'pdf-lib';
-import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, COLORS } from '../utils';
+import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, drawBulletPoint, COLORS } from '../utils';
 
 // Template 2 Body Content Renderer - Modern two-column style with sidebar
 function renderBodyContentTemplate2(
@@ -99,7 +99,7 @@ function renderBodyContentTemplate2(
           
           // Company and period on same line with separator
           const formattedPeriod = formatDate(period.trim());
-          const companyPeriodLine = `${companyName.trim()}  •  ${formattedPeriod}`;
+          const companyPeriodLine = `${companyName.trim()}  |  ${formattedPeriod}`;
           const companyPeriodLines = wrapText(companyPeriodLine, font, bodySize - 1, contentWidth - 20);
           for (const line of companyPeriodLines) {
             if (y < marginBottom) {
@@ -145,7 +145,15 @@ function renderBodyContentTemplate2(
               y = PAGE_HEIGHT - 72;
             }
             const xPos = i === 0 ? left + 12 : left + 12 + wrapped.indentWidth;
-            drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
+            
+            // Draw bullet point programmatically if this line has one
+            if (wrapped.hasBullet && i === 0) {
+              drawBulletPoint(context.page, xPos, y, bodySize, BLACK);
+              const bulletOffset = bodySize * 0.4 + font.widthOfTextAtSize(' ', bodySize);
+              drawTextWithBold(context.page, wrapped.lines[i], xPos + bulletOffset, y, font, fontBold, bodySize, BLACK);
+            } else {
+              drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
+            }
             y -= bodyLineHeight;
           }
         }

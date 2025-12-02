@@ -95,7 +95,7 @@ export function wrapTextWithIndent(
   font: PDFFont,
   size: number,
   maxWidth: number
-): { lines: string[]; prefix: string; indentWidth: number } {
+): { lines: string[]; prefix: string; indentWidth: number; hasBullet: boolean } {
   // Trim leading whitespace but preserve the structure
   const trimmedText = text.trimStart();
   const leadingWhitespace = text.slice(0, text.length - trimmedText.length);
@@ -105,25 +105,29 @@ export function wrapTextWithIndent(
   const bulletMatch = trimmedText.match(/^([\-\·•*▪▫◦‣⁃])(\s*)/);
   let prefix = '';
   let content = trimmedText;
+  let hasBullet = false;
   
   if (bulletMatch) {
-    // Normalize to '• ' (bullet with space) for consistency
-    prefix = '• ';
+    // Remove bullet from text - we'll draw it programmatically
+    hasBullet = true;
     content = trimmedText.slice(bulletMatch[0].length).trimStart();
   }
   
   // Calculate prefix width for indentation (include leading whitespace if any)
-  const fullPrefix = leadingWhitespace + prefix;
-  const prefixWidth = fullPrefix ? font.widthOfTextAtSize(fullPrefix, size) : 0;
+  // For bullets, we'll use a fixed width for the bullet + space
+  const bulletWidth = size * 0.4; // Approximate width for drawn bullet
+  const spaceWidth = font.widthOfTextAtSize(' ', size);
+  const prefixWidth = leadingWhitespace ? font.widthOfTextAtSize(leadingWhitespace, size) : 0;
+  const fullIndentWidth = prefixWidth + (hasBullet ? bulletWidth + spaceWidth : 0);
   
   // Wrap the content part
-  const wrappedContent = wrapText(content, font, size, maxWidth - prefixWidth);
+  const wrappedContent = wrapText(content, font, size, maxWidth - fullIndentWidth);
   
-  // Build lines with prefix on first line only
+  // Build lines without bullet character in text
   const lines: string[] = [];
   wrappedContent.forEach((line, index) => {
     if (index === 0) {
-      lines.push(fullPrefix + line);
+      lines.push(leadingWhitespace + line);
     } else {
       // For wrapped lines, add indentation but no bullet
       lines.push(leadingWhitespace + line);
@@ -132,9 +136,27 @@ export function wrapTextWithIndent(
   
   return {
     lines,
-    prefix: fullPrefix,
-    indentWidth: prefixWidth
+    prefix: leadingWhitespace,
+    indentWidth: fullIndentWidth,
+    hasBullet
   };
+}
+
+// Helper to draw a bullet point (circle) programmatically
+export function drawBulletPoint(
+  page: PDFPage,
+  x: number,
+  y: number,
+  size: number,
+  color: RGB
+) {
+  const bulletRadius = size * 0.15; // Proportional to font size
+  page.drawCircle({
+    x: x + bulletRadius,
+    y: y + (size * 0.4), // Adjust vertical position to align with text baseline
+    size: bulletRadius,
+    color: color,
+  });
 }
 
 // Helper to draw text with bold segments (markdown **bold**)

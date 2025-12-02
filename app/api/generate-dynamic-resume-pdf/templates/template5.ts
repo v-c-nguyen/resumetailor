@@ -1,5 +1,5 @@
 import { PDFPage, rgb } from 'pdf-lib';
-import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, COLORS } from '../utils';
+import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, drawBulletPoint, COLORS } from '../utils';
 
 // Template 5 Body Content Renderer - Structured style with top/bottom borders
 function renderBodyContentTemplate5(
@@ -329,7 +329,15 @@ function renderBodyContentTemplate5(
               y = PAGE_HEIGHT - 72;
             }
             const xPos = i === 0 ? left + 20 : left + 20 + wrapped.indentWidth;
-            drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
+            
+            // Draw bullet point programmatically if this line has one
+            if (wrapped.hasBullet && i === 0) {
+              drawBulletPoint(context.page, xPos, y, bodySize, BLACK);
+              const bulletOffset = bodySize * 0.4 + font.widthOfTextAtSize(' ', bodySize);
+              drawTextWithBold(context.page, wrapped.lines[i], xPos + bulletOffset, y, font, fontBold, bodySize, BLACK);
+            } else {
+              drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
+            }
             y -= bodyLineHeight;
           }
         }
@@ -422,7 +430,7 @@ export async function renderTemplate5(context: TemplateContext): Promise<Uint8Ar
   // Contact info positioned on the left side (asymmetric)
   const contactParts = [location, phone, email].filter(Boolean);
   if (contactParts.length > 0) {
-    const contactLine = contactParts.join('  •  ');
+    const contactLine = contactParts.join('  |  ');
     const contactLines = wrapText(contactLine, font, CONTACT_SIZE, CONTENT_WIDTH * 0.6);
     for (const line of contactLines) {
       page.drawText(line, { 

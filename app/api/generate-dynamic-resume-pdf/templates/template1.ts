@@ -1,5 +1,5 @@
 import { PDFPage, rgb } from 'pdf-lib';
-import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, COLORS } from '../utils';
+import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, drawBulletPoint, COLORS } from '../utils';
 
 // Template 1 Body Content Renderer - Minimalist style with colored section markers
 function renderBodyContentTemplate1(
@@ -140,7 +140,15 @@ function renderBodyContentTemplate1(
               y = PAGE_HEIGHT - 72;
             }
             const xPos = i === 0 ? left + 20 : left + 20 + wrapped.indentWidth;
-            drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
+            
+            // Draw bullet point programmatically if this line has one
+            if (wrapped.hasBullet && i === 0) {
+              drawBulletPoint(context.page, xPos, y, bodySize, BLACK);
+              const bulletOffset = bodySize * 0.4 + font.widthOfTextAtSize(' ', bodySize);
+              drawTextWithBold(context.page, wrapped.lines[i], xPos + bulletOffset, y, font, fontBold, bodySize, BLACK);
+            } else {
+              drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
+            }
             y -= bodyLineHeight;
           }
         }
