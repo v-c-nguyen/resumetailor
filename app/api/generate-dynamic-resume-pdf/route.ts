@@ -100,7 +100,6 @@ export async function POST(req: NextRequest) {
         { role: 'user', content: prompt }
       ],
       max_completion_tokens: 7000,
-      temperature: parseFloat('0.7'), // Lower temperature for more consistent results
     });
 
     const tailoredResume = completion.choices[0].message.content || '';
