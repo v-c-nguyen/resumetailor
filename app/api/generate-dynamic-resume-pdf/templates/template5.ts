@@ -391,7 +391,7 @@ function renderBodyContentTemplate5(
             }
             
             const lineText = wrapped.lines[i];
-            let xPos = i === 0 ? left + 20 : left + 20 + wrapped.indentWidth;
+            const xPos = i === 0 ? left + 20 : left + 20 + wrapped.indentWidth;
             
             // Check if line starts with bullet and draw it separately (not bold)
             if (i === 0 && (lineText.startsWith('•') || lineText.startsWith('·') || lineText.startsWith('-'))) {
