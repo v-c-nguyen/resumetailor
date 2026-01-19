@@ -63,7 +63,6 @@ async function generateResumePdf(resumeText: string, template: number = 1): Prom
 }
 
 export async function POST(req: NextRequest) {
-  const startTime = Date.now();
   try {
     // 1. Parse form data
     const formData = await req.formData();
@@ -95,22 +94,17 @@ export async function POST(req: NextRequest) {
     const pdfTemplate = profile?.pdfTemplate || 1;
 
     // 3. Tailor resume with OpenAI
-    const openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY,
-      timeout: 120000, // 2 minute timeout to prevent hanging
-    });
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const prompt = buildPrompt(baseResume, jobDescription, customPrompt);
 
-    const openAIStartTime = Date.now();
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_VERSION || 'gpt-4o-mini', // Using gpt-4o-mini for faster responses
+      model: process.env.OPENAI_VERSION || 'gpt-3.5-turbo',
       messages: [
         { role: 'system', content: 'You are a helpful assistant for creating professional resume content.' },
         { role: 'user', content: prompt }
       ],
-      max_completion_tokens: 10000,
+      max_completion_tokens: 7000,
     });
-    const openAITime = ((Date.now() - openAIStartTime) / 1000).toFixed(2);
 
     const tailoredResume = completion.choices[0].message.content || '';
     // const tailoredResume = jobDescription;
@@ -123,48 +117,42 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Generate PDF with template
-    const pdfStartTime = Date.now();
     const pdfBytes = await generateResumePdf(tailoredResume, pdfTemplate);
-    const pdfTime = ((Date.now() - pdfStartTime) / 1000).toFixed(2);
 
-    // 5. Return PDF as responseconst sanitize = v => v.replace(/[^a-zA-Z0-9_]/g, '_');
-    const sanitize = (v: string) => v.replace(/[^a-zA-Z0-9_]/g, '_');
+    // 5. Return PDF as response
+    const sanitize = (v: string | null) => {
+      if (!v) return '';
+      return v.replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_'); // Replace special chars and collapse multiple underscores
+    };
 
     const fileBase = [
       baseResumeProfile,
       company,
       role
     ]
-      .filter(Boolean)            // remove empty / null / undefined
-      .map((v: string | null) => v?.replace(/[^a-zA-Z0-9_]/g, '_'))              // sanitize each part
-      .join('_');
+      .map(sanitize)
+      .filter(v => v && v.trim().length > 0) // Remove empty strings after sanitization
+      .join('_')
+      .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
+      .trim() || 'resume'; // Trim any whitespace, default to 'resume' if empty
 
-    const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
-    
-    // Log timing information
-    console.log(`⏱️  Generation Times:
-      - OpenAI API: ${openAITime}s
-      - PDF Generation: ${pdfTime}s
-      - Total: ${totalTime}s`);
+    // Ensure filename ends with .pdf (not .pdf_) - clean and construct properly
+    // Remove .pdf from fileBase if it already exists, then add .pdf cleanly
+    const cleanFileBase = fileBase.replace(/\.pdf.*$/, ''); // Remove .pdf and anything after if it exists
+    const filename = `${cleanFileBase}.pdf`.replace(/\.pdf_+$/, '.pdf'); // Ensure it ends with .pdf, not .pdf_
 
     return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileBase}.pdf"`,
-        'X-OpenAI-Time': `${openAITime}s`,
-        'X-PDF-Generation-Time': `${pdfTime}s`,
-        'X-Total-Time': `${totalTime}s`
+        'Content-Disposition': `attachment; filename="${filename.replace(/"/g, '\\"')}"`
       }
     });
   } catch (error) {
-    const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.error(`❌ Error after ${totalTime}s:`, error);
     return new NextResponse(
       JSON.stringify({
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error',
-        timeElapsed: `${totalTime}s`
+        details: error instanceof Error ? error.message : 'Unknown error'
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
