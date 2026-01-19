@@ -12,6 +12,7 @@ import { renderTemplate5 } from './templates/template5';
 import { renderTemplate6 } from './templates/template6';
 import { renderTemplate7 } from './templates/template7';
 import { renderTemplate8 } from './templates/template8';
+import { renderTemplate9 } from './templates/template9';
 
 // Template router - routes to appropriate template renderer
 async function generateResumePdf(resumeText: string, template: number = 1): Promise<Uint8Array> {
@@ -26,6 +27,7 @@ async function generateResumePdf(resumeText: string, template: number = 1): Prom
     page,
     font,
     fontBold,
+    headline: parsed.headline,
     name: parsed.name,
     email: parsed.email,
     phone: parsed.phone,
@@ -53,12 +55,15 @@ async function generateResumePdf(resumeText: string, template: number = 1): Prom
       return await renderTemplate7(context);
     case 8:
       return await renderTemplate8(context);
+    case 9:
+      return await renderTemplate9(context);
     default:
-      return await renderTemplate1(context);
+      return await renderTemplate5(context);
   }
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
   try {
     // 1. Parse form data
     const formData = await req.formData();
@@ -68,9 +73,9 @@ export async function POST(req: NextRequest) {
     const baseResumeProfile = formData.get('base_resume_profile') as string | null;
 
     // Validate required fields
-    if (!jobDescription || !company || !role) {
+    if (!jobDescription) {
       return new NextResponse(
-        JSON.stringify({ error: 'Missing required fields: job_description, company, role' }),
+        JSON.stringify({ error: 'Missing required fields: job_description' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -90,29 +95,26 @@ export async function POST(req: NextRequest) {
     const pdfTemplate = profile?.pdfTemplate || 1;
 
     // 3. Tailor resume with OpenAI
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = new OpenAI({ 
+      apiKey: process.env.OPENAI_API_KEY,
+      timeout: 120000, // 2 minute timeout to prevent hanging
+    });
     const prompt = buildPrompt(baseResume, jobDescription, customPrompt);
-    const model = process.env.OPENAI_VERSION || 'gpt-3.5-turbo';
-    
-    // Log model being used for debugging (remove in production if needed)
-    console.log(`[Resume Generation] Using model: ${model}`);
-    console.log(`[Resume Generation] Using custom prompt: ${customPrompt ? 'Yes' : 'No'}`);
-    
-    // Build request parameters
-    const requestParams: any = {
-      model,
+
+    const openAIStartTime = Date.now();
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_VERSION || 'gpt-4o-mini', // Using gpt-4o-mini for faster responses
       messages: [
         { role: 'system', content: 'You are a helpful assistant for creating professional resume content.' },
         { role: 'user', content: prompt }
       ],
-      max_completion_tokens: 7000,
-    };
-
-
-    const completion = await openai.chat.completions.create(requestParams);
+      max_completion_tokens: 10000,
+    });
+    const openAITime = ((Date.now() - openAIStartTime) / 1000).toFixed(2);
 
     const tailoredResume = completion.choices[0].message.content || '';
-
+    // const tailoredResume = jobDescription;
+    console.log(tailoredResume);
     if (!tailoredResume) {
       return new NextResponse(
         JSON.stringify({ error: 'Failed to generate tailored resume content' }),
@@ -121,22 +123,48 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Generate PDF with template
+    const pdfStartTime = Date.now();
     const pdfBytes = await generateResumePdf(tailoredResume, pdfTemplate);
+    const pdfTime = ((Date.now() - pdfStartTime) / 1000).toFixed(2);
 
-    // 5. Return PDF as response
-    const fileBase = `${(baseResumeProfile && baseResumeProfile.replace(/[^a-zA-Z0-9_]/g, '_'))}_${company.replace(/[^a-zA-Z0-9_]/g, '_')}_${role.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+    // 5. Return PDF as responseconst sanitize = v => v.replace(/[^a-zA-Z0-9_]/g, '_');
+    const sanitize = (v: string) => v.replace(/[^a-zA-Z0-9_]/g, '_');
+
+    const fileBase = [
+      baseResumeProfile,
+      company,
+      role
+    ]
+      .filter(Boolean)            // remove empty / null / undefined
+      .map((v: string | null) => v?.replace(/[^a-zA-Z0-9_]/g, '_'))              // sanitize each part
+      .join('_');
+
+    const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+    
+    // Log timing information
+    console.log(`⏱️  Generation Times:
+      - OpenAI API: ${openAITime}s
+      - PDF Generation: ${pdfTime}s
+      - Total: ${totalTime}s`);
+
     return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileBase}.pdf"`
+        'Content-Disposition': `attachment; filename="${fileBase}.pdf"`,
+        'X-OpenAI-Time': `${openAITime}s`,
+        'X-PDF-Generation-Time': `${pdfTime}s`,
+        'X-Total-Time': `${totalTime}s`
       }
     });
   } catch (error) {
+    const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.error(`❌ Error after ${totalTime}s:`, error);
     return new NextResponse(
       JSON.stringify({
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timeElapsed: `${totalTime}s`
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );

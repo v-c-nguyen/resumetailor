@@ -1,8 +1,8 @@
 import { PDFPage, rgb } from 'pdf-lib';
 import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, COLORS } from '../utils';
 
-// Template 7 Body Content Renderer - Minimalist with geometric shapes
-function renderBodyContentTemplate7(
+// Template 9 Body Content Renderer - Modern design with balanced layout
+function renderBodyContentTemplate9(
   context: TemplateContext,
   y: number,
   left: number,
@@ -17,7 +17,7 @@ function renderBodyContentTemplate7(
   const { font, fontBold, body, PAGE_HEIGHT, PAGE_WIDTH, pdfDoc } = context;
   const BLACK = COLORS.BLACK;
   const MEDIUM_GRAY = COLORS.MEDIUM_GRAY;
-  const ORANGE = rgb(0.9, 0.5, 0.2);
+  const SLATE_BLUE = rgb(0.35, 0.45, 0.55);
   
   const bodyLines = body.split('\n');
   let firstJob = true;
@@ -26,7 +26,7 @@ function renderBodyContentTemplate7(
   for (let i = 0; i < bodyLines.length; i++) {
     const line = bodyLines[i].trim();
     if (!line) {
-      y -= 6;
+      y -= 8;
       continue;
     }
     
@@ -35,44 +35,27 @@ function renderBodyContentTemplate7(
                            /^(summary|education|experience|technical skills|skills|professional experience)$/i.test(line.trim());
     
     if (isSectionHeader) {
-      y -= 15;
+      y -= 20;
       const sectionHeader = line.endsWith(':') ? line.slice(0, -1).trim() : line.trim();
       currentSection = sectionHeader.toLowerCase();
-      const sectionLines = wrapText(sectionHeader, fontBold, sectionHeaderSize, contentWidth - 60);
+      const sectionLines = wrapText(sectionHeader, fontBold, sectionHeaderSize, contentWidth - 40);
       
       for (const sectionLine of sectionLines) {
         if (y < marginBottom) {
           context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-          y = PAGE_HEIGHT - 72;
+          y = PAGE_HEIGHT - 100;
         }
         
-        // Geometric shape (circle) before section header
-        const circleRadius = 4;
-        context.page.drawCircle({
-          x: left - 15,
-          y: y + sectionHeaderSize / 2,
-          size: circleRadius,
-          color: ORANGE,
-        });
-        
+        // Section header with elegant styling - just text, clean
         context.page.drawText(sectionLine, { 
           x: left, 
           y, 
-          size: sectionHeaderSize, 
+          size: sectionHeaderSize + 1, 
           font: fontBold, 
-          color: BLACK 
+          color: SLATE_BLUE 
         });
         
-        // Minimal line after text
-        const textWidth = fontBold.widthOfTextAtSize(sectionLine, sectionHeaderSize);
-        context.page.drawLine({
-          start: { x: left + textWidth + 10, y: y + sectionHeaderSize / 2 },
-          end: { x: right, y: y + sectionHeaderSize / 2 },
-          thickness: 0.5,
-          color: rgb(0.8, 0.8, 0.8),
-        });
-        
-        y -= sectionLineHeight + 8;
+        y -= sectionLineHeight + 10;
       }
     } else {
       const isJobExperience = / at .+:.+/.test(line);
@@ -93,18 +76,18 @@ function renderBodyContentTemplate7(
           }
           
           if (!firstJob) {
-            y -= 16;
+            y -= 22;
           }
           firstJob = false;
           
-          const titleLines = wrapText(jobTitle.trim(), fontBold, bodySize + 2, contentWidth - 20);
+          const titleLines = wrapText(jobTitle.trim(), fontBold, bodySize + 1.5, contentWidth - 20);
           for (const titleLine of titleLines) {
             if (y < marginBottom) {
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              y = PAGE_HEIGHT - 72;
+              y = PAGE_HEIGHT - 100;
             }
-            drawTextWithBold(context.page, titleLine, left + 20, y, font, fontBold, bodySize + 2, BLACK);
-            y -= bodyLineHeight + 2;
+            drawTextWithBold(context.page, titleLine, left + 15, y, font, fontBold, bodySize + 1.5, BLACK);
+            y -= bodyLineHeight + 3;
           }
           
           const formattedPeriod = formatDate(period.trim());
@@ -115,10 +98,10 @@ function renderBodyContentTemplate7(
           for (const line of companyPeriodLines) {
             if (y < marginBottom) {
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              y = PAGE_HEIGHT - 72;
+              y = PAGE_HEIGHT - 100;
             }
-            drawTextWithBold(context.page, line, left + 20, y, font, fontBold, bodySize, MEDIUM_GRAY);
-            y -= bodyLineHeight;
+            drawTextWithBold(context.page, line, left + 15, y, font, fontBold, bodySize, MEDIUM_GRAY);
+            y -= bodyLineHeight + 2;
           }
           
           y -= 10;
@@ -170,11 +153,11 @@ function renderBodyContentTemplate7(
             
             const wrappedSkills = wrapText(skillsText, font, bodySize, skillsAvailableWidth);
             
-            let currentX = left + 20;
+            let currentX = left + 15;
             
             if (y < marginBottom) {
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              y = PAGE_HEIGHT - 72;
+              y = PAGE_HEIGHT - 100;
             }
             
             context.page.drawText(bulletSymbol, { 
@@ -208,10 +191,10 @@ function renderBodyContentTemplate7(
                 y -= bodyLineHeight;
                 if (y < marginBottom) {
                   context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-                  y = PAGE_HEIGHT - 72;
+                  y = PAGE_HEIGHT - 100;
                 }
                 context.page.drawText(wrappedSkills[i], {
-                  x: left + 20 + bulletWidth,
+                  x: left + 15 + bulletWidth,
                   y,
                   size: bodySize,
                   font,
@@ -219,56 +202,56 @@ function renderBodyContentTemplate7(
                 });
               }
             }
-            y -= bodyLineHeight + 2;
+            y -= bodyLineHeight + 4;
           }
           } else {
             // For experience bullets and other content, add bullets if needed
             const hasBullet = /^[\-\·•]\s/.test(line);
-          const bulletSymbol = '•';
-          const bulletWidth = font.widthOfTextAtSize(bulletSymbol + '   ', bodySize);
-          
-          let textToWrap = line;
-          if (!hasBullet) {
-            textToWrap = bulletSymbol + '   ' + line;
-          }
-          
-          const wrapped = wrapTextWithIndent(textToWrap, font, bodySize, contentWidth - 20);
-          
-          // Calculate the content start position (after bullet) to align all wrapped lines
-          let contentStartX = left + 20 + bulletWidth;
-          
-          for (let i = 0; i < wrapped.lines.length; i++) {
-            if (y < marginBottom) {
-              context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              y = PAGE_HEIGHT - 72;
+            const bulletSymbol = '•';
+            const bulletWidth = font.widthOfTextAtSize(bulletSymbol + '   ', bodySize);
+            
+            let textToWrap = line;
+            if (!hasBullet) {
+              textToWrap = bulletSymbol + '   ' + line;
             }
             
-            const lineText = wrapped.lines[i];
+            const wrapped = wrapTextWithIndent(textToWrap, font, bodySize, contentWidth - 20);
             
-            if (i === 0 && (lineText.startsWith('•') || lineText.startsWith('·') || lineText.startsWith('-'))) {
-              const bulletMatch = lineText.match(/^([\-\·•])\s*(.*)/);
-              if (bulletMatch) {
-                const [, bulletChar, content] = bulletMatch;
-                const bulletX = left + 20;
-                context.page.drawText(bulletChar, {
-                  x: bulletX,
-                  y,
-                  size: bodySize,
-                  font,
-                  color: BLACK
-                });
-                contentStartX = bulletX + font.widthOfTextAtSize(bulletChar + '   ', bodySize);
-                drawTextWithBold(context.page, content, contentStartX, y, font, fontBold, bodySize, BLACK);
-              } else {
-                drawTextWithBold(context.page, lineText, left + 20, y, font, fontBold, bodySize, BLACK);
+            // Calculate the content start position (after bullet) to align all wrapped lines
+            let contentStartX = left + 15 + bulletWidth;
+            
+            for (let i = 0; i < wrapped.lines.length; i++) {
+              if (y < marginBottom) {
+                context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                y = PAGE_HEIGHT - 100;
               }
-            } else {
-              // For wrapped lines, align to the content start position (after bullet)
-              drawTextWithBold(context.page, lineText, contentStartX, y, font, fontBold, bodySize, BLACK);
+              
+              const lineText = wrapped.lines[i];
+              
+              if (i === 0 && (lineText.startsWith('•') || lineText.startsWith('·') || lineText.startsWith('-'))) {
+                const bulletMatch = lineText.match(/^([\-\·•])\s*(.*)/);
+                if (bulletMatch) {
+                  const [, bulletChar, content] = bulletMatch;
+                  const bulletX = left + 15;
+                  context.page.drawText(bulletChar, {
+                    x: bulletX,
+                    y,
+                    size: bodySize,
+                    font,
+                    color: BLACK
+                  });
+                  contentStartX = bulletX + font.widthOfTextAtSize(bulletChar + '   ', bodySize);
+                  drawTextWithBold(context.page, content, contentStartX, y, font, fontBold, bodySize, BLACK);
+                } else {
+                  drawTextWithBold(context.page, lineText, left + 15, y, font, fontBold, bodySize, BLACK);
+                }
+              } else {
+                // For wrapped lines, align to the content start position (after bullet)
+                drawTextWithBold(context.page, lineText, contentStartX, y, font, fontBold, bodySize, BLACK);
+              }
+              
+              y -= bodyLineHeight;
             }
-            
-            y -= bodyLineHeight;
-          }
           }
         }
       }
@@ -276,94 +259,118 @@ function renderBodyContentTemplate7(
     
     if (y < marginBottom) {
       context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      y = PAGE_HEIGHT - 72;
+      y = PAGE_HEIGHT - 100;
     }
   }
   
   return y;
 }
 
-// MINIMALIST GEOMETRIC TEMPLATE - Clean design with geometric shapes and minimal elements
-export async function renderTemplate7(context: TemplateContext): Promise<Uint8Array> {
+// MODERN ELEGANT DESIGN - Name in a prominent header bar with contact info elegantly placed
+export async function renderTemplate9(context: TemplateContext): Promise<Uint8Array> {
   const { pdfDoc, page, font, fontBold, headline, name, email, phone, location, PAGE_WIDTH, PAGE_HEIGHT } = context;
   const BLACK = COLORS.BLACK;
   const MEDIUM_GRAY = COLORS.MEDIUM_GRAY;
-  const ORANGE = rgb(0.9, 0.5, 0.2);
+  const SLATE_BLUE = rgb(0.35, 0.45, 0.55);
+  const LIGHT_SLATE = rgb(0.97, 0.98, 0.99);
   
-  const MARGIN_TOP = 70;
+  const HEADER_BAR_HEIGHT = 95;
+  const MARGIN_TOP =60;
   const MARGIN_BOTTOM = 50;
   const MARGIN_LEFT = 40;
   const MARGIN_RIGHT = 40;
   const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
   
-  const NAME_SIZE = 28;
-  const CONTACT_SIZE = 9;
-  const SECTION_HEADER_SIZE = 13;
-  const BODY_SIZE = 9.5;
+  const NAME_SIZE = 26;
+  const CONTACT_SIZE = 9.5;
+  const SECTION_HEADER_SIZE = 12;
+  const BODY_SIZE = 10;
   
-  let y = PAGE_HEIGHT - MARGIN_TOP;
+  // Draw header bar background
+  page.drawRectangle({
+    x: 0,
+    y: PAGE_HEIGHT - HEADER_BAR_HEIGHT,
+    width: PAGE_WIDTH,
+    height: HEADER_BAR_HEIGHT,
+    color: SLATE_BLUE,
+  });
+  
+  // Draw subtle top border accent
+  page.drawRectangle({
+    x: 0,
+    y: PAGE_HEIGHT - HEADER_BAR_HEIGHT,
+    width: PAGE_WIDTH,
+    height: 4,
+    color: rgb(0.25, 0.35, 0.45),
+  });
+  
   const left = MARGIN_LEFT;
   const right = PAGE_WIDTH - MARGIN_RIGHT;
   
-  // Geometric shape decoration (top right)
-  page.drawCircle({
-    x: PAGE_WIDTH - 40,
-    y: PAGE_HEIGHT - 40,
-    size: 25,
-    color: rgb(0.98, 0.95, 0.92),
-  });
-  page.drawCircle({
-    x: PAGE_WIDTH - 30,
-    y: PAGE_HEIGHT - 50,
-    size: 15,
-    color: ORANGE,
-  });
-  
-  // Name (left-aligned, minimal)
+  // Name in header bar (white text on colored background)
   if (name) {
-    const nameLines = wrapText(name, fontBold, NAME_SIZE, CONTENT_WIDTH);
+    const nameLines = wrapText(name, fontBold, NAME_SIZE, CONTENT_WIDTH * 0.65);
+    let nameY = PAGE_HEIGHT - 55;
     for (const line of nameLines) {
       page.drawText(line, { 
         x: left, 
-        y, 
+        y: nameY, 
         size: NAME_SIZE, 
         font: fontBold, 
-        color: BLACK 
+        color: rgb(1, 1, 1) // White
       });
-      y -= NAME_SIZE * 0.9;
+      nameY -= NAME_SIZE * 1.0;
     }
-    y -= 8;
+    nameY += 5;
+    // Headline (under name, left-aligned, light gray/white)
+    if (headline) {
+      const headlineSize = 12;
+      const headlineLines = wrapText(headline, font, headlineSize, CONTENT_WIDTH * 0.65);
+      for (const line of headlineLines) {
+        page.drawText(line, { 
+          x: left, 
+          y: nameY, 
+          size: headlineSize, 
+          font, 
+          color: rgb(0.9, 0.9, 0.9) // Light gray
+        });
+        nameY -= headlineSize * 1.2;
+      }
+    }
   }
   
-  // Contact info (minimal, left-aligned)
+  // Contact info in header bar (light gray text, right-aligned, vertically stacked)
   const contactParts = [location, phone, email].filter(Boolean);
   if (contactParts.length > 0) {
-    const contactLine = contactParts.join('  •  ');
-    const contactLines = wrapText(contactLine, font, CONTACT_SIZE, CONTENT_WIDTH);
-    for (const line of contactLines) {
-      page.drawText(line, { 
-        x: left, 
-        y, 
+    let contactY = PAGE_HEIGHT - 40;
+    for (const contactPart of contactParts) {
+      const textWidth = font.widthOfTextAtSize(contactPart, CONTACT_SIZE);
+      const rightX = right - textWidth;
+      page.drawText(contactPart, { 
+        x: rightX, 
+        y: contactY, 
         size: CONTACT_SIZE, 
         font, 
-        color: MEDIUM_GRAY 
+        color: rgb(0.92, 0.92, 0.92) // Light gray
       });
-      y -= CONTACT_SIZE * 1.3;
+      contactY -= CONTACT_SIZE * 1.6; // Stack vertically with spacing
     }
   }
   
+  // Start body content below header
+  let y = PAGE_HEIGHT - HEADER_BAR_HEIGHT - 30;
   
   // Render body content
-  y = renderBodyContentTemplate7(
+  y = renderBodyContentTemplate9(
     context, 
     y, 
     left, 
     right, 
     CONTENT_WIDTH, 
     BODY_SIZE, 
-    BODY_SIZE * 1.5, 
+    BODY_SIZE * 1.6, 
     SECTION_HEADER_SIZE, 
-    SECTION_HEADER_SIZE * 1.4, 
+    SECTION_HEADER_SIZE * 1.5, 
     MARGIN_BOTTOM
   );
   

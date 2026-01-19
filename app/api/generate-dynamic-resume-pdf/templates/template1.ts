@@ -1,7 +1,7 @@
-import { PDFPage, rgb } from 'pdf-lib';
+import { rgb } from 'pdf-lib';
 import { TemplateContext, wrapText, wrapTextWithIndent, formatDate, drawTextWithBold, COLORS } from '../utils';
 
-// Template 1 Body Content Renderer - Minimalist style with colored section markers
+// Template 1 Body Content Renderer - Elegant top accent bar design
 function renderBodyContentTemplate1(
   context: TemplateContext,
   y: number,
@@ -17,287 +17,437 @@ function renderBodyContentTemplate1(
   const { font, fontBold, body, PAGE_HEIGHT, PAGE_WIDTH, pdfDoc } = context;
   const BLACK = COLORS.BLACK;
   const MEDIUM_GRAY = COLORS.MEDIUM_GRAY;
-  const DEEP_PURPLE = rgb(0.3, 0.2, 0.4); // Deep purple accent
-
+  const DEEP_BLUE = rgb(0.2, 0.35, 0.55);
+  
   const bodyLines = body.split('\n');
   let firstJob = true;
-
+  let currentSection = '';
+  
   for (let i = 0; i < bodyLines.length; i++) {
     const line = bodyLines[i].trim();
     if (!line) {
-      y -= 6;
+      y -= 8;
       continue;
     }
-
-    if (line.endsWith(':')) {
-      y -= 18;
-      const sectionHeader = line.slice(0, -1);
-      const sectionLines = wrapText(sectionHeader, fontBold, sectionHeaderSize, contentWidth - 30);
-
+    
+    // Check if this is a section header (ends with colon or is a known section name)
+    const isSectionHeader = line.endsWith(':') || 
+                           /^(summary|education|experience|technical skills|skills|professional experience)$/i.test(line.trim());
+    
+    if (isSectionHeader) {
+      y -= 24;
+      const sectionHeader = line.endsWith(':') ? line.slice(0, -1).trim() : line.trim();
+      currentSection = sectionHeader.toLowerCase();
+      const sectionLines = wrapText(sectionHeader, fontBold, sectionHeaderSize, contentWidth - 40);
+      
       for (const sectionLine of sectionLines) {
         if (y < marginBottom) {
           context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-          y = PAGE_HEIGHT - 72;
+          // Redraw top accent bar on new page
+          const accentBarHeight = 8;
+          context.page.drawRectangle({
+            x: 0,
+            y: PAGE_HEIGHT - accentBarHeight,
+            width: PAGE_WIDTH,
+            height: accentBarHeight,
+            color: DEEP_BLUE,
+          });
+          y = PAGE_HEIGHT;
         }
-
-        // Draw colored square marker before section header
-        const squareSize = sectionHeaderSize * 0.6;
-        context.page.drawRectangle({
-          x: left,
-          y: y,
-          width: squareSize,
-          height: squareSize,
-          color: DEEP_PURPLE,
+        
+        // Section header with elegant styling
+        context.page.drawText(sectionLine, { 
+          x: left, 
+          y, 
+          size: sectionHeaderSize, 
+          font: fontBold, 
+          color: DEEP_BLUE 
         });
-
-        // Section header text next to the square
-        context.page.drawText(sectionLine, {
-          x: left + squareSize + 8,
-          y,
-          size: sectionHeaderSize,
-          font: fontBold,
-          color: BLACK
-        });
-
-        y -= sectionLineHeight;
+        
+        y -= sectionLineHeight + 5;
       }
     } else {
       const isJobExperience = / at .+:.+/.test(line);
-
+      
       if (isJobExperience) {
+        // Match format: "JobTitle at CompanyName, CompanyLocation : Period"
         const match = line.match(/^(.+?) at (.+?):\s*(.+)$/);
         if (match) {
-          const [, jobTitle, companyName, period] = match;
-
+          const [, jobTitle, companyPart, period] = match;
+          
+          // Split company part by last comma to separate company name and location
+          let companyName = companyPart.trim();
+          let companyLocation = '';
+          const lastCommaIndex = companyPart.indexOf(',');
+          if (lastCommaIndex !== -1) {
+            companyName = companyPart.substring(0, lastCommaIndex).trim();
+            companyLocation = companyPart.substring(lastCommaIndex + 1).trim();
+          }
+          
           if (!firstJob) {
-            y -= 14;
+            y -= 20;
           }
           firstJob = false;
-
-          // Job title (bold, larger)
-          const titleLines = wrapText(jobTitle.trim(), fontBold, bodySize, contentWidth - 20);
+          
+          const titleLines = wrapText(jobTitle.trim(), fontBold, bodySize + 1.5, contentWidth - 20);
           for (const titleLine of titleLines) {
             if (y < marginBottom) {
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              y = PAGE_HEIGHT - 72;
+              const accentBarHeight = 8;
+              context.page.drawRectangle({
+                x: 0,
+                y: PAGE_HEIGHT - accentBarHeight,
+                width: PAGE_WIDTH,
+                height: accentBarHeight,
+                color: DEEP_BLUE,
+              });
+              y = PAGE_HEIGHT - 80;
             }
-            drawTextWithBold(context.page, titleLine, left + 20, y, font, fontBold, bodySize, BLACK);
-            y -= bodyLineHeight + 2;
+            drawTextWithBold(context.page, titleLine, left + 15, y, font, fontBold, bodySize + 1.5, BLACK);
+            y -= bodyLineHeight + 1;
           }
-
-          // Company name and period on separate lines
+          
           const formattedPeriod = formatDate(period.trim());
-
-          // Company name
-          const companyLines = wrapText(companyName.trim(), font, bodySize, contentWidth - 20);
-          for (const line of companyLines) {
+          // Display: "CompanyName, CompanyLocation  •  Period" (or just "CompanyName  •  Period" if no location)
+          const companyInfo = companyLocation ? `${companyName}  •  ${companyLocation}` : companyName;
+          const companyPeriodLine = `${companyInfo}  •  ${formattedPeriod}`;
+          const companyPeriodLines = wrapText(companyPeriodLine, font, bodySize, contentWidth - 20);
+          for (const line of companyPeriodLines) {
             if (y < marginBottom) {
               context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              y = PAGE_HEIGHT - 72;
+              const accentBarHeight = 8;
+              context.page.drawRectangle({
+                x: 0,
+                y: PAGE_HEIGHT - accentBarHeight,
+                width: PAGE_WIDTH,
+                height: accentBarHeight,
+                color: DEEP_BLUE,
+              });
+              y = PAGE_HEIGHT - 80;
             }
-            drawTextWithBold(context.page, line, left + 20, y, font, fontBold, bodySize, BLACK);
-            y -= bodyLineHeight;
+            drawTextWithBold(context.page, line, left + 15, y, font, fontBold, bodySize, MEDIUM_GRAY);
+            y -= bodyLineHeight + 1;
           }
-
-          // Period in italic style (using smaller size and gray)
-          if (y < marginBottom) {
-            context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-            y = PAGE_HEIGHT - 72;
-          }
-          context.page.drawText(formattedPeriod, {
-            x: left + 20,
-            y,
-            size: bodySize - 1,
-            font,
-            color: MEDIUM_GRAY
-          });
-          y -= bodyLineHeight + 3;
+          
+          y -= 5;
         }
       } else {
-        // Distinguish skill categories from experience bullets
-        // Skill categories have pattern: "• Category Name: skills list"
-        // Experience bullets are full sentences without this pattern
-        const lineWithoutBullet = line.trim().replace(/^[·•]\s*/, '');
-        const colonIndex = lineWithoutBullet.indexOf(':');
-        // Consider it a skill category if it starts with bullet AND has a colon early in the line (within first 30 chars)
-        // This distinguishes "• Programming Languages: JavaScript..." from "• Built Python microservices..."
-        const isSkillsCategory = (line.startsWith('·') || line.startsWith('•')) && 
-                                 colonIndex !== -1 && 
-                                 colonIndex < 30 && 
-                                 !lineWithoutBullet.substring(0, colonIndex).includes(' at ');
+        // Check if we're in Summary or Education section first
+        const isSummaryOrEducation = currentSection === 'summary' || currentSection === 'education';
         
-        if (isSkillsCategory) {
-          // Extract category name (part before colon) and skills (part after colon)
-          const bulletSymbol = '•';
-          const bulletWidth = font.widthOfTextAtSize(bulletSymbol + ' ', bodySize);
+        if (isSummaryOrEducation) {
+          // For Summary and Education, strip any existing bullets and use regular text wrapping
+          const lineWithoutBullet = line.replace(/^[\-\·•]\s*/, '').trim();
+          const wrapped = wrapText(lineWithoutBullet, font, bodySize, contentWidth - 20);
           
-          const categoryName = lineWithoutBullet.substring(0, colonIndex + 1).trim(); // Include the colon
-          const skillsText = lineWithoutBullet.substring(colonIndex + 1).trim();
-          
-          // Calculate available width for skills (after category name and bullet)
-          const categoryWidth = fontBold.widthOfTextAtSize(categoryName, bodySize);
-          const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
-          const skillsAvailableWidth = contentWidth - 20 - bulletWidth - categoryWidth - spaceWidth;
-          
-          // Wrap skills text
-          const wrappedSkills = wrapText(skillsText, font, bodySize, skillsAvailableWidth);
-          
-          // Draw bullet dot, category name in bold, and skills on same/next lines
-          let currentX = left + 20;
-          
-          if (y < marginBottom) {
-            context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-            y = PAGE_HEIGHT - 72;
+          for (const lineText of wrapped) {
+            if (y < marginBottom) {
+              context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+              const accentBarHeight = 8;
+              context.page.drawRectangle({
+                x: 0,
+                y: PAGE_HEIGHT - accentBarHeight,
+                width: PAGE_WIDTH,
+                height: accentBarHeight,
+                color: DEEP_BLUE,
+              });
+              y = PAGE_HEIGHT - 80;
+            }
+            
+            drawTextWithBold(context.page, lineText, left + 15, y, font, fontBold, bodySize, BLACK);
+            y -= bodyLineHeight;
           }
+        } else {
+          const lineWithoutBullet = line.trim().replace(/^[·•]\s*/, '');
+          const colonIndex = lineWithoutBullet.indexOf(':');
+          // Check if we're in Technical Skills section
+          const isTechnicalSkillsSection = currentSection === 'technical skills' || currentSection === 'skills';
+          // A line is a skills category if:
+          // 1. It starts with a bullet AND has a colon (original check)
+          // 2. OR we're in Technical Skills section AND the line has a colon (new check)
+          const isSkillsCategory = ((line.startsWith('·') || line.startsWith('•')) && 
+                                   colonIndex !== -1 && 
+                                   colonIndex < 30 && 
+                                   !lineWithoutBullet.substring(0, colonIndex).includes(' at ')) ||
+                                  (isTechnicalSkillsSection && colonIndex !== -1 && colonIndex < 50);
+        
+          if (isSkillsCategory) {
+          const bulletSymbol = '•';
+          const bulletWidth = font.widthOfTextAtSize(bulletSymbol + '   ', bodySize);
           
-          // Draw bullet dot (regular font, not bold)
-          context.page.drawText(bulletSymbol, { 
-            x: currentX, 
-            y, 
-            size: bodySize, 
-            font, 
-            color: BLACK 
-          });
-          
-          // Draw category name in bold (after bullet)
-          currentX += bulletWidth;
-          context.page.drawText(categoryName, { 
-            x: currentX, 
-            y, 
-            size: bodySize, 
-            font: fontBold, 
-            color: BLACK 
-          });
-          
-          // Draw skills text on same line or wrapped to next lines
-          if (wrappedSkills.length > 0 && wrappedSkills[0]) {
-            currentX += categoryWidth;
-            context.page.drawText(wrappedSkills[0], {
-              x: currentX,
-              y,
-              size: bodySize,
-              font,
-              color: BLACK
+          const colonIndex = lineWithoutBullet.indexOf(':');
+          if (colonIndex !== -1) {
+            const categoryName = lineWithoutBullet.substring(0, colonIndex + 1).trim();
+            const skillsText = lineWithoutBullet.substring(colonIndex + 1).trim();
+            
+            const categoryWidth = fontBold.widthOfTextAtSize(categoryName, bodySize);
+            const spaceWidth = font.widthOfTextAtSize(' ', bodySize);
+            const skillsAvailableWidth = contentWidth - 20 - bulletWidth - categoryWidth - spaceWidth;
+            
+            const wrappedSkills = wrapText(skillsText, font, bodySize, skillsAvailableWidth);
+            
+            let currentX = left + 15;
+            
+            if (y < marginBottom) {
+              context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+              const accentBarHeight = 8;
+              context.page.drawRectangle({
+                x: 0,
+                y: PAGE_HEIGHT - accentBarHeight,
+                width: PAGE_WIDTH,
+                height: accentBarHeight,
+                color: DEEP_BLUE,
+              });
+              y = PAGE_HEIGHT - 80;
+            }
+            
+            context.page.drawText(bulletSymbol, { 
+              x: currentX, 
+              y, 
+              size: bodySize, 
+              font, 
+              color: BLACK 
             });
             
-            // Draw remaining wrapped lines (indented to align with skills, after bullet)
-            for (let i = 1; i < wrappedSkills.length; i++) {
-              y -= bodyLineHeight;
-              if (y < marginBottom) {
-                context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-                y = PAGE_HEIGHT - 72;
-              }
-              context.page.drawText(wrappedSkills[i], {
-                x: left + 20 + bulletWidth,
+            currentX += bulletWidth;
+            context.page.drawText(categoryName, { 
+              x: currentX, 
+              y, 
+              size: bodySize, 
+              font: fontBold, 
+              color: BLACK 
+            });
+            
+            if (wrappedSkills.length > 0 && wrappedSkills[0]) {
+              currentX += categoryWidth + spaceWidth;
+              context.page.drawText(wrappedSkills[0], {
+                x: currentX,
                 y,
                 size: bodySize,
                 font,
                 color: BLACK
               });
+              
+              for (let i = 1; i < wrappedSkills.length; i++) {
+                y -= bodyLineHeight;
+                if (y < marginBottom) {
+                  context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                  const accentBarHeight = 8;
+                  context.page.drawRectangle({
+                    x: 0,
+                    y: PAGE_HEIGHT - accentBarHeight,
+                    width: PAGE_WIDTH,
+                    height: accentBarHeight,
+                    color: DEEP_BLUE,
+                  });
+                  y = PAGE_HEIGHT - 80;
+                }
+                context.page.drawText(wrappedSkills[i], {
+                  x: left + 15 + bulletWidth,
+                  y,
+                  size: bodySize,
+                  font,
+                  color: BLACK
+                });
+              }
             }
+            y -= bodyLineHeight + 4;
           }
-          y -= bodyLineHeight + 6;
-        } else {
-          const wrapped = wrapTextWithIndent(line, font, bodySize, contentWidth - 20);
-          for (let i = 0; i < wrapped.lines.length; i++) {
-            if (y < marginBottom) {
-              context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              y = PAGE_HEIGHT - 72;
+          } else {
+            // For experience bullets and other content, add bullets if needed
+            const hasBullet = /^[\-\·•]\s/.test(line);
+            const bulletSymbol = '•';
+            const bulletWidth = font.widthOfTextAtSize(bulletSymbol + '   ', bodySize);
+            
+            let textToWrap = line;
+            if (!hasBullet) {
+              textToWrap = bulletSymbol + '   ' + line;
             }
-            const xPos = i === 0 ? left + 20 : left + 20 + wrapped.indentWidth;
-            drawTextWithBold(context.page, wrapped.lines[i], xPos, y, font, fontBold, bodySize, BLACK);
-            y -= bodyLineHeight;
+            
+            const wrapped = wrapTextWithIndent(textToWrap, font, bodySize, contentWidth - 20);
+            
+            // Calculate the content start position (after bullet) to align all wrapped lines
+            let contentStartX = left + 15 + bulletWidth;
+            
+            for (let i = 0; i < wrapped.lines.length; i++) {
+              if (y < marginBottom) {
+                context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+                const accentBarHeight = 8;
+                context.page.drawRectangle({
+                  x: 0,
+                  y: PAGE_HEIGHT - accentBarHeight,
+                  width: PAGE_WIDTH,
+                  height: accentBarHeight,
+                  color: DEEP_BLUE,
+                });
+                y = PAGE_HEIGHT - 80;
+              }
+              
+              const lineText = wrapped.lines[i];
+              
+              if (i === 0 && (lineText.startsWith('•') || lineText.startsWith('·') || lineText.startsWith('-'))) {
+                const bulletMatch = lineText.match(/^([\-\·•])\s*(.*)/);
+                if (bulletMatch) {
+                  const [, bulletChar, content] = bulletMatch;
+                  const bulletX = left + 15;
+                  context.page.drawText(bulletChar, {
+                    x: bulletX,
+                    y,
+                    size: bodySize,
+                    font,
+                    color: BLACK
+                  });
+                  contentStartX = bulletX + font.widthOfTextAtSize(bulletChar + '   ', bodySize);
+                  drawTextWithBold(context.page, content, contentStartX, y, font, fontBold, bodySize, BLACK);
+                } else {
+                  drawTextWithBold(context.page, lineText, left + 15, y, font, fontBold, bodySize, BLACK);
+                }
+              } else {
+                // For wrapped lines, align to the content start position (after bullet)
+                drawTextWithBold(context.page, lineText, contentStartX, y, font, fontBold, bodySize, BLACK);
+              }
+              
+              y -= bodyLineHeight;
+            }
           }
         }
       }
     }
-
+    
     if (y < marginBottom) {
       context.page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      y = PAGE_HEIGHT - 72;
+      const accentBarHeight = 8;
+      context.page.drawRectangle({
+        x: 0,
+        y: PAGE_HEIGHT - accentBarHeight,
+        width: PAGE_WIDTH,
+        height: accentBarHeight,
+        color: DEEP_BLUE,
+      });
+      y = PAGE_HEIGHT - 80;
     }
   }
-
+  
   return y;
 }
 
-// MINIMALIST TEMPLATE - Clean design with top border and colored section markers
+// ELEGANT TOP ACCENT BAR TEMPLATE - Attractive design with subtle top accent bar and prominent header
 export async function renderTemplate1(context: TemplateContext): Promise<Uint8Array> {
-  const { pdfDoc, page, font, fontBold, name, email, phone, location, PAGE_WIDTH, PAGE_HEIGHT } = context;
+  const { pdfDoc, page, font, fontBold, headline, name, email, phone, location, PAGE_WIDTH, PAGE_HEIGHT } = context;
   const BLACK = COLORS.BLACK;
   const MEDIUM_GRAY = COLORS.MEDIUM_GRAY;
-  const DEEP_PURPLE = rgb(0.3, 0.2, 0.4); // Deep purple accent color
-
-  const MARGIN_TOP = 70;
+  const DEEP_BLUE = rgb(0.2, 0.35, 0.55);
+  const LIGHT_BLUE = rgb(0.97, 0.98, 0.99);
+  
+  const ACCENT_BAR_HEIGHT = 8;
+  const HEADER_HEIGHT = 110;
+  const MARGIN_TOP = 85;
   const MARGIN_BOTTOM = 50;
-  const MARGIN_LEFT = 60;
-  const MARGIN_RIGHT = 60;
+  const MARGIN_LEFT = 35;
+  const MARGIN_RIGHT = 35;
   const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
-
-  const NAME_SIZE = 32;
+  
+  const NAME_SIZE = 28;
   const CONTACT_SIZE = 10;
-  const SECTION_HEADER_SIZE = 15;
+  const SECTION_HEADER_SIZE = 13;
   const BODY_SIZE = 10;
-
-
-  let y = PAGE_HEIGHT - 60;
+  
+  // Draw elegant top accent bar
+  page.drawRectangle({
+    x: 0,
+    y: PAGE_HEIGHT - ACCENT_BAR_HEIGHT,
+    width: PAGE_WIDTH,
+    height: ACCENT_BAR_HEIGHT,
+    color: DEEP_BLUE,
+  });
+  
+  // Draw subtle header background
+  page.drawRectangle({
+    x: 0,
+    y: PAGE_HEIGHT - HEADER_HEIGHT,
+    width: PAGE_WIDTH,
+    height: HEADER_HEIGHT - ACCENT_BAR_HEIGHT,
+    color: LIGHT_BLUE,
+  });
+  
+  let y = PAGE_HEIGHT - MARGIN_TOP;
   const left = MARGIN_LEFT;
   const right = PAGE_WIDTH - MARGIN_RIGHT;
-
-  // Name (left-aligned, regular case, deep purple)
+  
+  // Name (prominent, centered in header, deep blue)
   if (name) {
     const nameLines = wrapText(name, fontBold, NAME_SIZE, CONTENT_WIDTH);
+    let nameY = PAGE_HEIGHT - 50;
     for (const line of nameLines) {
-      page.drawText(line, {
-        x: left,
-        y,
-        size: NAME_SIZE,
-        font: fontBold,
-        color: DEEP_PURPLE
+      const textWidth = fontBold.widthOfTextAtSize(line, NAME_SIZE);
+      const centerX = (PAGE_WIDTH - textWidth) / 2;
+      page.drawText(line, { 
+        x: centerX, 
+        y: nameY, 
+        size: NAME_SIZE, 
+        font: fontBold, 
+        color: DEEP_BLUE 
       });
-      y -= NAME_SIZE * 0.9;
+      nameY -= NAME_SIZE * 1.0;
+    }
+    nameY += 5;
+    
+    // Headline (under name, centered, medium gray)
+    if (headline) {
+      const headlineSize = 12;
+      const headlineLines = wrapText(headline, font, headlineSize, CONTENT_WIDTH);
+      for (const line of headlineLines) {
+        const textWidth = font.widthOfTextAtSize(line, headlineSize);
+        const centerX = (PAGE_WIDTH - textWidth) / 2;
+        page.drawText(line, { 
+          x: centerX, 
+          y: nameY, 
+          size: headlineSize, 
+          font, 
+          color: MEDIUM_GRAY 
+        });
+        nameY -= headlineSize * 1.2;
+      }
     }
   }
-
-  // Contact info in horizontal layout (left-aligned, separated by vertical bars)
+  
+  // Contact info (centered in header, below name)
   const contactParts = [location, phone, email].filter(Boolean);
   if (contactParts.length > 0) {
-    const contactLine = contactParts.join('  |  ');
+    const contactLine = contactParts.join('  •  ');
     const contactLines = wrapText(contactLine, font, CONTACT_SIZE, CONTENT_WIDTH);
+    let contactY = PAGE_HEIGHT - 90;
     for (const line of contactLines) {
-      page.drawText(line, {
-        x: left,
-        y,
-        size: CONTACT_SIZE,
-        font,
-        color: MEDIUM_GRAY
+      const textWidth = font.widthOfTextAtSize(line, CONTACT_SIZE);
+      const centerX = (PAGE_WIDTH - textWidth) / 2;
+      page.drawText(line, { 
+        x: centerX, 
+        y: contactY, 
+        size: CONTACT_SIZE, 
+        font, 
+        color: MEDIUM_GRAY 
       });
-      y -= CONTACT_SIZE * 1.4;
+      contactY -= CONTACT_SIZE * 1.4;
     }
-    y -= 20;
   }
-  // Draw thin top border in deep purple
-  page.drawLine({
-    start: { x: 0, y: PAGE_HEIGHT  - 70 },
-    end: { x: PAGE_WIDTH, y: PAGE_HEIGHT - 70},
-    thickness: 4,
-    color: DEEP_PURPLE,
-  });
-
-
+  
+  // Start body content below header
+  y = PAGE_HEIGHT - HEADER_HEIGHT - 25;
+  
   // Render body content
   y = renderBodyContentTemplate1(
-    context,
-    y,
-    left,
-    right,
-    CONTENT_WIDTH,
-    BODY_SIZE,
-    BODY_SIZE * 1.5,
-    SECTION_HEADER_SIZE,
-    SECTION_HEADER_SIZE * 1.3,
+    context, 
+    y, 
+    left, 
+    right, 
+    CONTENT_WIDTH, 
+    BODY_SIZE, 
+    BODY_SIZE * 1.6, 
+    SECTION_HEADER_SIZE, 
+    SECTION_HEADER_SIZE * 1.5, 
     MARGIN_BOTTOM
   );
-
+  
   return await pdfDoc.save();
 }
+
