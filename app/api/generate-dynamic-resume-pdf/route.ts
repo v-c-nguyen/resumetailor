@@ -62,14 +62,17 @@ async function generateResumePdf(resumeText: string, template: number = 1): Prom
   }
 }
 
+const LOG_PREFIX = '[generate-dynamic-resume-pdf]';
+
 export async function POST(req: NextRequest) {
   try {
-    // 1. Parse form data
+    console.log(LOG_PREFIX, '1. Parsing form data...');
     const formData = await req.formData();
     const jobDescription = formData.get('job_description') as string;
     const company = formData.get('company') as string;
     const role = formData.get('role') as string;
     const baseResumeProfile = formData.get('base_resume_profile') as string | null;
+    console.log(LOG_PREFIX, '1. Done. profile:', baseResumeProfile, 'company:', company, 'role:', role);
 
     // Validate required fields
     if (!jobDescription) {
@@ -88,12 +91,15 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Load base resume based on selected profile, fallback to default embedded
+    console.log(LOG_PREFIX, '2. Loading profile from DB...');
     const profile = await getBaseResumeByName(baseResumeProfile);
     const baseResume: string = profile?.resumeText || ``;
     const customPrompt = profile?.customPrompt;
     const pdfTemplate = profile?.pdfTemplate || 1;
+    console.log(LOG_PREFIX, '2. Done. baseResume length:', baseResume?.length ?? 0, 'pdfTemplate:', pdfTemplate);
 
     // 3. Tailor resume with OpenAI
+    console.log(LOG_PREFIX, '3. Building prompt and calling OpenAI...');
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const prompt = buildPrompt(baseResume, jobDescription, customPrompt);
 
@@ -103,12 +109,11 @@ export async function POST(req: NextRequest) {
         { role: 'system', content: 'You are a helpful assistant for creating professional resume content.' },
         { role: 'user', content: prompt }
       ],
-      max_completion_tokens: 7000,
+      max_completion_tokens: 15000,
     });
 
     const tailoredResume = completion.choices[0].message.content || '';
-    // const tailoredResume = jobDescription;
-    console.log(tailoredResume);
+    console.log(LOG_PREFIX, '3. OpenAI done. tailoredResume length:', tailoredResume?.length ?? 0);
     if (!tailoredResume) {
       return new NextResponse(
         JSON.stringify({ error: 'Failed to generate tailored resume content' }),
@@ -117,7 +122,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Generate PDF with template
+    console.log(LOG_PREFIX, '4. Generating PDF (template:', pdfTemplate, ')...');
     const pdfBytes = await generateResumePdf(tailoredResume, pdfTemplate);
+    console.log(LOG_PREFIX, '4. PDF generated. size:', pdfBytes?.length ?? 0);
 
     // 5. Return PDF as response
     const sanitize = (v: string | null) => {
@@ -141,6 +148,7 @@ export async function POST(req: NextRequest) {
     const cleanFileBase = fileBase.replace(/\.pdf.*$/, ''); // Remove .pdf and anything after if it exists
     const filename = `${cleanFileBase}.pdf`.replace(/\.pdf_+$/, '.pdf'); // Ensure it ends with .pdf, not .pdf_
 
+    console.log(LOG_PREFIX, '5. Returning PDF response.');
     return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
@@ -149,6 +157,10 @@ export async function POST(req: NextRequest) {
       }
     });
   } catch (error) {
+    console.error(LOG_PREFIX, 'ERROR:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error && error.stack) {
+      console.error(LOG_PREFIX, 'Stack:', error.stack);
+    }
     return new NextResponse(
       JSON.stringify({
         error: 'Internal server error',
