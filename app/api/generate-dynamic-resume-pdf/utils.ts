@@ -46,6 +46,61 @@ function isValidLocation(text: string): boolean {
   return /^[a-zA-Z\s,\-]+$/.test(text.trim()) && text.trim().length > 2;
 }
 
+/** Strip zero-width / bidi marks that break phone/email matching when pasted from the web */
+function normalizeContactSegment(text: string): string {
+  return text
+    .replace(/[\u200B-\u200F\uFEFF\u202A-\u202E\u2066-\u2069]/g, '')
+    .trim();
+}
+
+type ParseResumeFields = {
+  email: string;
+  phone: string;
+  location: string;
+  linkedin: string;
+};
+
+/**
+ * Model output often uses one line: email | phone | location
+ * Split and classify each segment so PDF header fields populate correctly.
+ */
+function absorbPipeDelimitedContactLine(line: string, result: ParseResumeFields): boolean {
+  if (!line.includes('|')) {
+    return false;
+  }
+  const parts = line
+    .split('|')
+    .map((p) => normalizeContactSegment(p))
+    .filter(Boolean);
+  if (parts.length < 2) {
+    return false;
+  }
+  let matched = 0;
+  for (const part of parts) {
+    if (!result.email && isValidEmail(part)) {
+      result.email = part;
+      matched++;
+      continue;
+    }
+    if (!result.phone && isValidPhone(part)) {
+      result.phone = part;
+      matched++;
+      continue;
+    }
+    if (!result.linkedin && isValidLinkedIn(part)) {
+      result.linkedin = part;
+      matched++;
+      continue;
+    }
+    if (!result.location && isValidLocation(part)) {
+      result.location = part;
+      matched++;
+      continue;
+    }
+  }
+  return matched > 0;
+}
+
 // Helper to parse resume text with validation
 export function parseResume(resumeText: string): {
   headline: string;
@@ -89,12 +144,20 @@ export function parseResume(resumeText: string): {
   let bodyStart = 0;
   
   for (let idx = 2; idx < Math.min(nonEmptyLines.length, maxFieldsToCheck + 2); idx++) {
-    const { line, index } = nonEmptyLines[idx];
-    
+    const { line: rawLine, index } = nonEmptyLines[idx];
+    const line = normalizeContactSegment(rawLine);
+    if (!line) {
+      continue;
+    }
+
     // If we hit a section header, this is where body starts
     if (line.endsWith(':')) {
       bodyStart = index;
       break;
+    }
+
+    if (absorbPipeDelimitedContactLine(line, result)) {
+      continue;
     }
     
     // Check for clearly identifiable fields (only if not already found)

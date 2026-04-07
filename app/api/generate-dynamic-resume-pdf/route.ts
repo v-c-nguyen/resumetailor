@@ -114,6 +114,7 @@ export async function POST(req: NextRequest) {
 
     const tailoredResume = completion.choices[0].message.content || '';
     console.log(LOG_PREFIX, '3. OpenAI done. tailoredResume length:', tailoredResume?.length ?? 0);
+    console.log(LOG_PREFIX, '3b. Model output (tailoredResume):\n' + tailoredResume);
     if (!tailoredResume) {
       return new NextResponse(
         JSON.stringify({ error: 'Failed to generate tailored resume content' }),
