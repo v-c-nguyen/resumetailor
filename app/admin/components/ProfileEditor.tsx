@@ -2,6 +2,14 @@
 import { useState, useEffect } from 'react';
 import { BaseResumeProfile } from '@/app/data/baseResumes';
 import { DEFAULT_PROMPT_TEMPLATE } from '@/app/utils/promptBuilder';
+import { PDF_TEMPLATE_IDS } from '@/lib/pdfTemplateIds';
+
+function fallbackTemplateOptions() {
+  return PDF_TEMPLATE_IDS.map((value) => ({
+    value,
+    label: `Template${value}`,
+  }));
+}
 
 interface ProfileEditorProps {
   profiles: BaseResumeProfile[];
@@ -45,29 +53,21 @@ Degree | Institute | Period
   useEffect(() => {
     async function fetchTemplates() {
       try {
-        const response = await fetch('/api/admin/templates');
+        const response = await fetch('/api/admin/templates', { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
-          if (data.templates && Array.isArray(data.templates)) {
+          if (data.templates && Array.isArray(data.templates) && data.templates.length > 0) {
             setPdfTemplates(data.templates);
+          } else {
+            setPdfTemplates(fallbackTemplateOptions());
           }
         } else {
           console.error('Failed to fetch templates:', response.statusText);
-          // Fallback to default templates if API fails
-          setPdfTemplates([
-            { value: 2, label: 'Template2' },
-            { value: 3, label: 'Template3' },
-            { value: 4, label: 'Template4' },
-          ]);
+          setPdfTemplates(fallbackTemplateOptions());
         }
       } catch (err) {
         console.error('Error fetching templates:', err);
-        // Fallback to default templates if API fails
-        setPdfTemplates([
-          { value: 2, label: 'Template2' },
-          { value: 3, label: 'Template3' },
-          { value: 4, label: 'Template4' },
-        ]);
+        setPdfTemplates(fallbackTemplateOptions());
       } finally {
         setTemplatesLoading(false);
       }
@@ -157,7 +157,7 @@ Degree | Institute | Period
         setSelectedProfileName(editingProfile.name);
         onUpdate();
         // Refresh template counts after profile update
-        const templatesResponse = await fetch('/api/admin/templates');
+        const templatesResponse = await fetch('/api/admin/templates', { credentials: 'include' });
         if (templatesResponse.ok) {
           const templatesData = await templatesResponse.json();
           if (templatesData.templates && Array.isArray(templatesData.templates)) {
@@ -190,7 +190,7 @@ Degree | Institute | Period
         }
         onUpdate();
         // Refresh template counts after profile deletion
-        const templatesResponse = await fetch('/api/admin/templates');
+        const templatesResponse = await fetch('/api/admin/templates', { credentials: 'include' });
         if (templatesResponse.ok) {
           const templatesData = await templatesResponse.json();
           if (templatesData.templates && Array.isArray(templatesData.templates)) {

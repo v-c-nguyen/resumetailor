@@ -17,7 +17,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const loadProfiles = async () => {
     try {
-      const response = await fetch('/api/admin/profiles');
+      const response = await fetch('/api/admin/profiles', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setProfiles(data.profiles);
